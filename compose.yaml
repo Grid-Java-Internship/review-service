@@ -1,9 +1,26 @@
 services:
+  rev-service:
+    image: 'rev-service:latest'
+    ports:
+      - "8890:8890"
+    container_name: "review-service"
+    networks:
+      - global-network
+    depends_on:
+      - postgres
   postgres:
+    container_name: postgresql
     image: 'postgres:latest'
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      - 'POSTGRES_DB=reviews'
+      - 'POSTGRES_PASSWORD=password'
+      - 'POSTGRES_USER=user123'
     ports:
-      - '5432'
+      - "5432:5432"
+    networks:
+      - global-network
+networks:
+  global-network:
+    name: global-network
+    external: true
+    driver: bridge
