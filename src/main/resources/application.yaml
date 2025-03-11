@@ -20,8 +20,11 @@ spring:
     port: 5672
     username: guest
     password: guest
+  devtools:
+    livereload:
+      enabled: true
 server:
-  port: 8890
+  port: 8084
   servlet:
     context-path: /api
 logging:

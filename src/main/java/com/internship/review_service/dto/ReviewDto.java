@@ -2,8 +2,7 @@ package com.internship.review_service.dto;
 
 
 public record ReviewDto(
-
-        Long id,
+        Long review_id,
 
         String text,
 
