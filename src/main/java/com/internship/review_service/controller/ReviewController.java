@@ -4,8 +4,6 @@ import com.internship.review_service.dto.ReviewCreateDto;
 import com.internship.review_service.dto.ReviewDto;
 import com.internship.review_service.dto.ReviewEditDto;
 import com.internship.review_service.service.ReviewService;
-import com.internship.review_service.service.ReviewServiceImpl;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +16,11 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @GetMapping
-    public ResponseEntity<ReviewDto> getReview() {
-        return ResponseEntity.ok(new ReviewDto(1L,1L,1L,"a","a"));
+    @GetMapping("getr/{revid}")
+    public ResponseEntity<ReviewDto> getReview(@PathVariable("revid") Long reviewId) {
+
+        return ResponseEntity.ok()
+                .body(reviewService.getUserReview(reviewId));
     }
 
     @PostMapping("user/addreview/{id}")
@@ -52,8 +52,10 @@ public class ReviewController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("user/{id}")
-    public ResponseEntity<Void> deleteReview(@PathVariable("id") Long reviewId) {
+    @DeleteMapping("user/{revid}/{id}")
+    public ResponseEntity<Void> deleteReview(@PathVariable("revid") Long reviewId,@PathVariable("id") Long userId) {
+
+        reviewService.deleteUserReview(userId,reviewId);
 
         return ResponseEntity.ok().build();
     }

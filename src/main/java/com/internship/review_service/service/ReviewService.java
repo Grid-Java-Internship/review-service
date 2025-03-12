@@ -9,4 +9,8 @@ public interface ReviewService {
 
     ReviewDto addJobReview(Long userId, Long jobId, ReviewCreateDto reviewCreateDto);
 
+    void deleteUserReview(Long userId, Long reviewId);
+
+    ReviewDto getUserReview(Long reviewId);
+
 }

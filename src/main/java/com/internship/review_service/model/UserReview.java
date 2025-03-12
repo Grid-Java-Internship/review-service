@@ -15,8 +15,6 @@ public class UserReview extends Review {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long userReviewId;
 
-    private Long userId;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "status")
     private Status statusId;

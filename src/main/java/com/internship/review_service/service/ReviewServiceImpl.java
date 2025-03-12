@@ -4,6 +4,7 @@ package com.internship.review_service.service;
 import com.internship.review_service.dto.ReviewCreateDto;
 import com.internship.review_service.dto.ReviewDto;
 import com.internship.review_service.exception.NotFoundException;
+import com.internship.review_service.exception.UnknownUserIdException;
 import com.internship.review_service.feign.JobService;
 import com.internship.review_service.feign.UserService;
 import com.internship.review_service.mapper.ReviewMapper;
@@ -16,6 +17,8 @@ import com.internship.review_service.repository.UserReviewRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +53,7 @@ public class ReviewServiceImpl implements ReviewService{
         return reviewMapper.toDto(userReviewRepository.save(review));
     }
 
+    @Transactional
     @Override
     public ReviewDto addJobReview(Long userId,Long jobId, ReviewCreateDto reviewCreateDto) {
         userService.getUser(userId);
@@ -64,4 +68,33 @@ public class ReviewServiceImpl implements ReviewService{
 
         return reviewMapper.toJobDto(jobReviewRepository.save(review));
     }
+
+    @Transactional
+    @Override
+    public void deleteUserReview(Long userId, Long reviewId) { //Integrate the logic with token for the userId?
+
+        Optional<UserReview> review = userReviewRepository.findById(reviewId);
+
+        if(review.isEmpty())
+            throw new NotFoundException("Review with this id not found! id: " + reviewId);
+
+        if(!review.get().getReviewerId().equals(userId))
+            throw new UnknownUserIdException("This user does not own this review! id: " +userId);
+
+        userReviewRepository.delete(review.get());
+    }
+
+    @Override
+    public ReviewDto getUserReview(Long reviewId) {
+
+        Optional<UserReview> review = userReviewRepository.findById(reviewId);
+
+        if(review.isEmpty())
+            throw new NotFoundException("Review with this id not found! id: " + reviewId);
+
+        System.out.println(review.get());
+
+        return reviewMapper.toDto(review.get());
+    }
+
 }
