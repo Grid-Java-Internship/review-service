@@ -18,7 +18,7 @@ public class FeignConfig {
         @Override
         public Exception decode(String methodKey, Response response) {
             if (response.status() == 404) {
-                return new NotFoundException("User not found.");
+                return new NotFoundException("Resource not found.");
             }
             return new Exception("Something snapped!" + response.status());
         }

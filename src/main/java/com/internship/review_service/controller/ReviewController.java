@@ -20,7 +20,7 @@ public class ReviewController {
 
     @GetMapping
     public ResponseEntity<ReviewDto> getReview() {
-        return ResponseEntity.ok(new ReviewDto(1L,"a","a"));
+        return ResponseEntity.ok(new ReviewDto(1L,1L,1L,"a","a"));
     }
 
     @PostMapping("user/addreview/{id}")
@@ -32,10 +32,12 @@ public class ReviewController {
                 .body(reviewService.addUserReview(userId,reviewCreateDto));
     }
 
-    @PostMapping("job/addreview")
-    public ResponseEntity<Void> createJobReview() {
+    @PostMapping("job/addreview/{id}/{jobid}")
+    public ResponseEntity<ReviewDto> createJobReview(@PathVariable("id") Long userId,
+                                                @PathVariable("jobid") Long jobId,
+                                                @RequestBody ReviewCreateDto reviewCreateDto) {
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(reviewService.addJobReview(userId, jobId, reviewCreateDto));
     }
 
     @PutMapping("/edit/{id}")

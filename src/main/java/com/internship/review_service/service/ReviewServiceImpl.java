@@ -4,8 +4,10 @@ package com.internship.review_service.service;
 import com.internship.review_service.dto.ReviewCreateDto;
 import com.internship.review_service.dto.ReviewDto;
 import com.internship.review_service.exception.NotFoundException;
+import com.internship.review_service.feign.JobService;
 import com.internship.review_service.feign.UserService;
 import com.internship.review_service.mapper.ReviewMapper;
+import com.internship.review_service.model.JobReview;
 import com.internship.review_service.model.UserReview;
 import com.internship.review_service.rabbitmq.producer.AddedReviewProducer;
 import com.internship.review_service.repository.JobReviewRepository;
@@ -25,6 +27,8 @@ public class ReviewServiceImpl implements ReviewService{
 
     private final UserReviewRepository userReviewRepository;
 
+    private final JobService jobService;
+
     private final JobReviewRepository jobReviewRepository;
 
     private final StatusRepository statusRepository;
@@ -41,6 +45,8 @@ public class ReviewServiceImpl implements ReviewService{
 
         review.setStatusId(statusRepository.findStatusByStatusId(3L));
 
+        review.setReviewerId(userId);
+
         return reviewMapper.toDto(userReviewRepository.save(review));
     }
 
@@ -48,10 +54,14 @@ public class ReviewServiceImpl implements ReviewService{
     public ReviewDto addJobReview(Long userId,Long jobId, ReviewCreateDto reviewCreateDto) {
         userService.getUser(userId);
 
-        jobReviewRepository.findById(jobId).orElseThrow(() -> new NotFoundException("Job not found"));
+        jobService.getJobById(jobId);
 
+        JobReview review = reviewMapper.toJobEntity(reviewCreateDto);
 
+        review.setReviewerId(userId);
 
-        return null;
+        review.setJobId(jobId);
+
+        return reviewMapper.toJobDto(jobReviewRepository.save(review));
     }
 }
