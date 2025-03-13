@@ -9,6 +9,7 @@ import com.internship.review_service.feign.JobService;
 import com.internship.review_service.feign.UserService;
 import com.internship.review_service.mapper.ReviewMapper;
 import com.internship.review_service.model.JobReview;
+import com.internship.review_service.model.Review;
 import com.internship.review_service.model.UserReview;
 import com.internship.review_service.rabbitmq.producer.AddedReviewProducer;
 import com.internship.review_service.repository.JobReviewRepository;
@@ -18,7 +19,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -92,9 +96,22 @@ public class ReviewServiceImpl implements ReviewService{
         if(review.isEmpty())
             throw new NotFoundException("Review with this id not found! id: " + reviewId);
 
-        System.out.println(review.get());
 
         return reviewMapper.toDto(review.get());
+    }
+
+    @Override
+    public List<ReviewDto> getAllJobReviews(Long jobId) {
+
+        jobService.getJobById(jobId);
+
+        List<JobReview> jobReviews = jobReviewRepository.findAllByJobId(jobId);
+
+        Stream<ReviewDto> streamOfJobReviews = jobReviews
+                .stream()
+                .map(reviewMapper::toJobDto);
+
+        return streamOfJobReviews.toList();
     }
 
 }

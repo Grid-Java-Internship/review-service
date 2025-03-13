@@ -3,6 +3,8 @@ package com.internship.review_service.service;
 import com.internship.review_service.dto.ReviewCreateDto;
 import com.internship.review_service.dto.ReviewDto;
 
+import java.util.List;
+
 public interface ReviewService {
 
     ReviewDto addUserReview(Long userId, ReviewCreateDto reviewCreateDto);
@@ -12,5 +14,7 @@ public interface ReviewService {
     void deleteUserReview(Long userId, Long reviewId);
 
     ReviewDto getUserReview(Long reviewId);
+
+    List<ReviewDto> getAllJobReviews(Long jobId);
 
 }

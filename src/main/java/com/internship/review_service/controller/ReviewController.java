@@ -9,18 +9,25 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/review/")
+@RequestMapping("v1/review/")
 @RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @GetMapping("getr/{revid}")
-    public ResponseEntity<ReviewDto> getReview(@PathVariable("revid") Long reviewId) {
+    @GetMapping("user/getr/{revid}")
+    public ResponseEntity<ReviewDto> getUserReview(@PathVariable("revid") Long reviewId) {
 
         return ResponseEntity.ok()
                 .body(reviewService.getUserReview(reviewId));
+    }
+
+    @GetMapping("job/getr/{jobid}")
+    public List<ReviewDto> getJobReviews(@PathVariable("jobid") Long jobid) {
+        return reviewService.getAllJobReviews(jobid);
     }
 
     @PostMapping("user/addreview/{id}")
