@@ -3,6 +3,7 @@ package com.internship.review_service.service;
 
 import com.internship.review_service.dto.ReviewCreateDto;
 import com.internship.review_service.dto.ReviewDto;
+import com.internship.review_service.exception.NoReviewsOnResource;
 import com.internship.review_service.exception.NotFoundException;
 import com.internship.review_service.exception.UnknownUserIdException;
 import com.internship.review_service.feign.JobService;
@@ -106,6 +107,9 @@ public class ReviewServiceImpl implements ReviewService{
         jobService.getJobById(jobId);
 
         List<JobReview> jobReviews = jobReviewRepository.findAllByJobId(jobId);
+
+        if(jobReviews.isEmpty())
+            throw new NoReviewsOnResource("No reviews found for this job! id: " + jobId);
 
         Stream<ReviewDto> streamOfJobReviews = jobReviews
                 .stream()

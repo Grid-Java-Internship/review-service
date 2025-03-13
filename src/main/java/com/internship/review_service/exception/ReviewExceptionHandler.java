@@ -82,4 +82,17 @@ public class ReviewExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
 
+    @ExceptionHandler(NoReviewsOnResource.class)
+    public ResponseEntity<ExceptionResponse> handleUnknownUserId(NoReviewsOnResource ex){
+        String errorMessage = ex.getMessage();
+
+        ExceptionResponse errorResponse = ExceptionResponse
+                .builder()
+                .statusCode(HttpStatus.FORBIDDEN.value())
+                .messages(List.of(errorMessage))
+                .build();
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(errorResponse);
+    }
+
 }
