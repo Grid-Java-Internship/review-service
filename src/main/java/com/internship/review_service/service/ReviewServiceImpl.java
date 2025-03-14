@@ -12,6 +12,7 @@ import com.internship.review_service.mapper.ReviewMapper;
 import com.internship.review_service.model.JobReview;
 import com.internship.review_service.model.Review;
 import com.internship.review_service.model.UserReview;
+import com.internship.review_service.rabbitmq.EmailDetails;
 import com.internship.review_service.rabbitmq.producer.AddedReviewProducer;
 import com.internship.review_service.repository.JobReviewRepository;
 import com.internship.review_service.repository.StatusRepository;
@@ -43,6 +44,12 @@ public class ReviewServiceImpl implements ReviewService{
 
     private final UserService userService;
 
+    /**
+     * Creates a new user review.
+     * @param userId the id of the user creating the review
+     * @param reviewCreateDto the review data
+     * @return the created review
+     */
     @Transactional
     @Override
     public ReviewDto addUserReview(Long userId, ReviewCreateDto reviewCreateDto) {
@@ -55,9 +62,18 @@ public class ReviewServiceImpl implements ReviewService{
 
         review.setReviewerId(userId);
 
+        addedReviewProducer.sendMessage(new EmailDetails("arsenijepetrovic763@gmail.com"));
+
         return reviewMapper.toDto(userReviewRepository.save(review));
     }
 
+    /**
+     * Creates a new job review.
+     * @param userId the id of the user creating the review
+     * @param jobId the id of the job being reviewed
+     * @param reviewCreateDto the review data
+     * @return the created review
+     */
     @Transactional
     @Override
     public ReviewDto addJobReview(Long userId,Long jobId, ReviewCreateDto reviewCreateDto) {
@@ -74,6 +90,13 @@ public class ReviewServiceImpl implements ReviewService{
         return reviewMapper.toJobDto(jobReviewRepository.save(review));
     }
 
+    /**
+     * Deletes a user review by its id, but only if the user requesting the deletion is the same as the user that created the review.
+     * @param userId the id of the user requesting the deletion
+     * @param reviewId the id of the review to be deleted
+     * @throws NotFoundException if no review with the given id exists
+     * @throws UnknownUserIdException if the user requesting the deletion is not the same as the user that created the review
+     */
     @Transactional
     @Override
     public void deleteUserReview(Long userId, Long reviewId) { //Integrate the logic with token for the userId?
@@ -89,6 +112,12 @@ public class ReviewServiceImpl implements ReviewService{
         userReviewRepository.delete(review.get());
     }
 
+    /**
+     * Finds a user review by its id.
+     * @param reviewId the id of the review
+     * @return the found review
+     * @throws NotFoundException if no review with the given id exists
+     */
     @Override
     public ReviewDto getUserReview(Long reviewId) {
 
@@ -101,6 +130,12 @@ public class ReviewServiceImpl implements ReviewService{
         return reviewMapper.toDto(review.get());
     }
 
+    /**
+     * Finds all reviews for a given job.
+     * @param jobId the id of the job
+     * @return a list of all reviews for the given job
+     * @throws NoReviewsOnResource if no reviews are found for the given job
+     */
     @Override
     public List<ReviewDto> getAllJobReviews(Long jobId) {
 
