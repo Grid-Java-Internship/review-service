@@ -6,7 +6,7 @@ public record ReviewDto(
 
         Long jobId,
 
-        Long review_id,
+        Long reviewId,
 
         String text,
 

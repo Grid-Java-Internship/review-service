@@ -19,10 +19,10 @@ public interface ReviewMapper {
 
     JobReview toJobEntity(ReviewCreateDto reviewCreateDto);
 
-    @Mapping(source = "userReviewId", target = "review_id")
+    @Mapping(source = "userReviewId", target = "reviewId")
     ReviewDto toDto(UserReview review);
 
-    @Mapping(source = "jobReviewId", target = "review_id")
+    @Mapping(source = "jobReviewId", target = "reviewId")
     ReviewDto toJobDto(JobReview review);
 
 }

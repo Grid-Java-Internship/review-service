@@ -3,6 +3,7 @@ package com.internship.review_service.service;
 
 import com.internship.review_service.dto.ReviewCreateDto;
 import com.internship.review_service.dto.ReviewDto;
+import com.internship.review_service.dto.UserDto;
 import com.internship.review_service.exception.NoReviewsOnResource;
 import com.internship.review_service.exception.NotFoundException;
 import com.internship.review_service.exception.UnknownUserIdException;
@@ -10,10 +11,8 @@ import com.internship.review_service.feign.JobService;
 import com.internship.review_service.feign.UserService;
 import com.internship.review_service.mapper.ReviewMapper;
 import com.internship.review_service.model.JobReview;
-import com.internship.review_service.model.Review;
 import com.internship.review_service.model.UserReview;
-import com.internship.review_service.rabbitmq.EmailDetails;
-import com.internship.review_service.rabbitmq.producer.AddedReviewProducer;
+import com.internship.review_service.rabbitmq.producer.ReviewMessageProducer;
 import com.internship.review_service.repository.JobReviewRepository;
 import com.internship.review_service.repository.StatusRepository;
 import com.internship.review_service.repository.UserReviewRepository;
@@ -23,14 +22,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
 public class ReviewServiceImpl implements ReviewService{
 
-    private final AddedReviewProducer addedReviewProducer;
+    private final ReviewMessageProducer addedReviewProducer;
 
     private final ReviewMapper reviewMapper;
 
@@ -54,15 +52,13 @@ public class ReviewServiceImpl implements ReviewService{
     @Override
     public ReviewDto addUserReview(Long userId, ReviewCreateDto reviewCreateDto) {
 
-        userService.getUser(userId);
+        UserDto user = userService.getUser(userId).getBody();
 
         UserReview review = reviewMapper.toEntity(reviewCreateDto);
-
         review.setStatusId(statusRepository.findStatusByStatusId(3L));
-
         review.setReviewerId(userId);
 
-        addedReviewProducer.sendMessage(new EmailDetails("arsenijepetrovic763@gmail.com"));
+        addedReviewProducer.sendAddedReviewMessage(user.email());
 
         return reviewMapper.toDto(userReviewRepository.save(review));
     }

@@ -25,7 +25,7 @@ public class ReviewController {
      * @param reviewId the id of the review
      * @return the found review
      */
-    @GetMapping("user/getr/{revid}")
+    @GetMapping("user/{revid}")
     public ResponseEntity<ReviewDto> getUserReview(@PathVariable("revid") Long reviewId) {
 
         return ResponseEntity.ok()
@@ -37,7 +37,7 @@ public class ReviewController {
      * @param jobid the id of the job
      * @return a list of all reviews for the given job
      */
-    @GetMapping("job/getr/{jobid}")
+    @GetMapping("job/{jobid}")
     public List<ReviewDto> getJobReviews(@PathVariable("jobid") Long jobid) {
         return reviewService.getAllJobReviews(jobid);
     }
@@ -49,12 +49,12 @@ public class ReviewController {
      * @return the created review wrapped in a ResponseEntity
      */
     @PostMapping("user/addreview/{id}")
-    public ResponseEntity<ReviewDto> createUserReview(@PathVariable("id") Long userId,
+    public ResponseEntity<Void> createUserReview(@PathVariable("id") Long userId,
                                                  @RequestBody ReviewCreateDto reviewCreateDto) {
 
-        return ResponseEntity
-                .ok()
-                .body(reviewService.addUserReview(userId,reviewCreateDto));
+        reviewService.addUserReview(userId,reviewCreateDto);
+
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -65,11 +65,13 @@ public class ReviewController {
      * @return the created review wrapped in a ResponseEntity
      */
     @PostMapping("job/addreview/{id}/{jobid}")
-    public ResponseEntity<ReviewDto> createJobReview(@PathVariable("id") Long userId,
+    public ResponseEntity<Void> createJobReview(@PathVariable("id") Long userId,
                                                 @PathVariable("jobid") Long jobId,
                                                 @RequestBody ReviewCreateDto reviewCreateDto) {
 
-        return ResponseEntity.ok().body(reviewService.addJobReview(userId, jobId, reviewCreateDto));
+        reviewService.addJobReview(userId,jobId,reviewCreateDto);
+
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/edit/{id}")
