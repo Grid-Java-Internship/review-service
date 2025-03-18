@@ -3,6 +3,7 @@ package com.internship.review_service;
 
 import com.internship.review_service.dto.ReviewCreateDto;
 import com.internship.review_service.dto.ReviewDto;
+import com.internship.review_service.dto.UserDto;
 import com.internship.review_service.exception.NoReviewsOnResource;
 import com.internship.review_service.exception.NotFoundException;
 import com.internship.review_service.exception.UnknownUserIdException;
@@ -12,6 +13,7 @@ import com.internship.review_service.mapper.ReviewMapper;
 import com.internship.review_service.model.JobReview;
 import com.internship.review_service.model.Status;
 import com.internship.review_service.model.UserReview;
+import com.internship.review_service.rabbitmq.producer.ReviewMessageProducer;
 import com.internship.review_service.repository.JobReviewRepository;
 import com.internship.review_service.repository.StatusRepository;
 import com.internship.review_service.repository.UserReviewRepository;
@@ -22,6 +24,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,6 +54,9 @@ public class AddingReviewsTests {
     @Mock
     private UserService userService;
 
+    @Mock
+    private ReviewMessageProducer reviewMessageProducer;
+
     @InjectMocks
     private ReviewServiceImpl reviewService;
 
@@ -68,6 +75,10 @@ public class AddingReviewsTests {
     private Long jobId;
 
     private Long reviewId;
+
+    private UserDto userDto;
+
+    private ResponseEntity<UserDto> userDtoResponseEntity;
 
     @BeforeEach
     void setUp() {
@@ -92,11 +103,18 @@ public class AddingReviewsTests {
         jobReview.setReviewerId(userId);
 
         reviewDto = new ReviewDto(1L,null,1L,"aaaa","Aaaa");
+
+        userDto = new UserDto(1L,"John","Doe","john.doe@gmail.com");
+
+        userDtoResponseEntity = new ResponseEntity<>(
+                userDto, null, HttpStatus.OK
+        );
     }
 
     @Test
     void testAddUserReview_Success() {
 
+        when(userService.getUser(userId)).thenReturn(userDtoResponseEntity);
         when(reviewMapper.toEntity(reviewCreateDto)).thenReturn(userReview);
         when(statusRepository.findStatusByStatusId(3L)).thenReturn(status);
         when(userReviewRepository.save(userReview)).thenReturn(userReview);
@@ -134,6 +152,8 @@ public class AddingReviewsTests {
 
         assertDoesNotThrow(() -> jobService.getJobById(jobReview.getJobReviewId()));
 
+        when(userService.getUser(userId)).thenReturn(userDtoResponseEntity);
+
         when(jobReviewRepository.save(jobReview)).thenReturn(jobReview);
 
         when(reviewMapper.toJobDto(jobReview)).thenReturn(reviewDto);
@@ -145,6 +165,7 @@ public class AddingReviewsTests {
 
     @Test
     void testAddJobReview_JobNotFound() {
+        when(userService.getUser(userId)).thenReturn(userDtoResponseEntity);
         when(jobService.getJobById(jobId)).thenThrow(new NotFoundException("Job not found"));
 
         assertThrows(NotFoundException.class, () -> reviewService.addJobReview(userId,jobId,reviewCreateDto));

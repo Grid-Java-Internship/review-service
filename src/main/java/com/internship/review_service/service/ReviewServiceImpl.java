@@ -26,9 +26,9 @@ import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
-public class ReviewServiceImpl implements ReviewService{
+public class ReviewServiceImpl implements ReviewService {
 
-    private final ReviewMessageProducer addedReviewProducer;
+    private final ReviewMessageProducer reviewMessageProducer;
 
     private final ReviewMapper reviewMapper;
 
@@ -44,7 +44,8 @@ public class ReviewServiceImpl implements ReviewService{
 
     /**
      * Creates a new user review.
-     * @param userId the id of the user creating the review
+     *
+     * @param userId          the id of the user creating the review
      * @param reviewCreateDto the review data
      * @return the created review
      */
@@ -58,22 +59,23 @@ public class ReviewServiceImpl implements ReviewService{
         review.setStatusId(statusRepository.findStatusByStatusId(3L));
         review.setReviewerId(userId);
 
-        addedReviewProducer.sendAddedReviewMessage(user.email());
+        reviewMessageProducer.sendAddedReviewMessage(user.email(), userId);
 
         return reviewMapper.toDto(userReviewRepository.save(review));
     }
 
     /**
      * Creates a new job review.
-     * @param userId the id of the user creating the review
-     * @param jobId the id of the job being reviewed
+     *
+     * @param userId          the id of the user creating the review
+     * @param jobId           the id of the job being reviewed
      * @param reviewCreateDto the review data
      * @return the created review
      */
     @Transactional
     @Override
-    public ReviewDto addJobReview(Long userId,Long jobId, ReviewCreateDto reviewCreateDto) {
-        userService.getUser(userId);
+    public ReviewDto addJobReview(Long userId, Long jobId, ReviewCreateDto reviewCreateDto) {
+        UserDto user = userService.getUser(userId).getBody();
 
         jobService.getJobById(jobId);
 
@@ -83,14 +85,17 @@ public class ReviewServiceImpl implements ReviewService{
 
         review.setJobId(jobId);
 
+        reviewMessageProducer.sendAddedReviewMessage(user.email(), userId);
+
         return reviewMapper.toJobDto(jobReviewRepository.save(review));
     }
 
     /**
      * Deletes a user review by its id, but only if the user requesting the deletion is the same as the user that created the review.
-     * @param userId the id of the user requesting the deletion
+     *
+     * @param userId   the id of the user requesting the deletion
      * @param reviewId the id of the review to be deleted
-     * @throws NotFoundException if no review with the given id exists
+     * @throws NotFoundException      if no review with the given id exists
      * @throws UnknownUserIdException if the user requesting the deletion is not the same as the user that created the review
      */
     @Transactional
@@ -99,17 +104,17 @@ public class ReviewServiceImpl implements ReviewService{
 
         Optional<UserReview> review = userReviewRepository.findById(reviewId);
 
-        if(review.isEmpty())
-            throw new NotFoundException("Review with this id not found! id: " + reviewId);
+        if (review.isEmpty()) throw new NotFoundException("Review with this id not found! id: " + reviewId);
 
-        if(!review.get().getReviewerId().equals(userId))
-            throw new UnknownUserIdException("This user does not own this review! id: " +userId);
+        if (!review.get().getReviewerId().equals(userId))
+            throw new UnknownUserIdException("This user does not own this review! id: " + userId);
 
         userReviewRepository.delete(review.get());
     }
 
     /**
      * Finds a user review by its id.
+     *
      * @param reviewId the id of the review
      * @return the found review
      * @throws NotFoundException if no review with the given id exists
@@ -119,8 +124,7 @@ public class ReviewServiceImpl implements ReviewService{
 
         Optional<UserReview> review = userReviewRepository.findById(reviewId);
 
-        if(review.isEmpty())
-            throw new NotFoundException("Review with this id not found! id: " + reviewId);
+        if (review.isEmpty()) throw new NotFoundException("Review with this id not found! id: " + reviewId);
 
 
         return reviewMapper.toDto(review.get());
@@ -128,6 +132,7 @@ public class ReviewServiceImpl implements ReviewService{
 
     /**
      * Finds all reviews for a given job.
+     *
      * @param jobId the id of the job
      * @return a list of all reviews for the given job
      * @throws NoReviewsOnResource if no reviews are found for the given job
@@ -139,12 +144,9 @@ public class ReviewServiceImpl implements ReviewService{
 
         List<JobReview> jobReviews = jobReviewRepository.findAllByJobId(jobId);
 
-        if(jobReviews.isEmpty())
-            throw new NoReviewsOnResource("No reviews found for this job! id: " + jobId);
+        if (jobReviews.isEmpty()) throw new NoReviewsOnResource("No reviews found for this job! id: " + jobId);
 
-        Stream<ReviewDto> streamOfJobReviews = jobReviews
-                .stream()
-                .map(reviewMapper::toJobDto);
+        Stream<ReviewDto> streamOfJobReviews = jobReviews.stream().map(reviewMapper::toJobDto);
 
         return streamOfJobReviews.toList();
     }

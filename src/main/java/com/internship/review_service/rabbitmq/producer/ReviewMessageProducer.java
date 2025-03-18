@@ -21,21 +21,22 @@ public class ReviewMessageProducer {
     private String forgotPasswordKey;
 
     /**
-     * Sends a message to the "notifications" exchange with the routing key "forgot.password".
+     * Sends a message to the "notifications" exchange with the routing key "forgot.password" (temporary).
      * The message contains the email address extracted from the provided EmailDetails object.
      *
      * @param emailTo the String object representing the email of recipient
      */
-    public void sendAddedReviewMessage(String emailTo){
+    public void sendAddedReviewMessage(String emailTo,Long userId){
         log.info("{} {}", forgotPasswordKey, exchangeName);
 
         amqpTemplate.convertAndSend(exchangeName,
                 forgotPasswordKey, //temporary for testing purposes
-                createAnAddedReviewMessage(emailTo));
+                createAnAddedReviewMessage(emailTo,userId));
     }
 
-    private Message createAnAddedReviewMessage(String emailTo) {
+    private Message createAnAddedReviewMessage(String emailTo,Long userId) {
         Message message = new Message();
+        message.setUserId(userId);
         message.setTitle("Added review confirmation");
         message.setContent("You have successfully added a review");
         message.setEmailTo(emailTo);

@@ -25,8 +25,8 @@ public class ReviewController {
      * @param reviewId the id of the review
      * @return the found review
      */
-    @GetMapping("user/{revid}")
-    public ResponseEntity<ReviewDto> getUserReview(@PathVariable("revid") Long reviewId) {
+    @GetMapping("user/{revId}")
+    public ResponseEntity<ReviewDto> getUserReview(@PathVariable("revId") Long reviewId) {
 
         return ResponseEntity.ok()
                 .body(reviewService.getUserReview(reviewId));
@@ -37,8 +37,8 @@ public class ReviewController {
      * @param jobid the id of the job
      * @return a list of all reviews for the given job
      */
-    @GetMapping("job/{jobid}")
-    public List<ReviewDto> getJobReviews(@PathVariable("jobid") Long jobid) {
+    @GetMapping("job/{jobId}")
+    public List<ReviewDto> getJobReviews(@PathVariable("jobId") Long jobid) {
         return reviewService.getAllJobReviews(jobid);
     }
 

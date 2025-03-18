@@ -41,3 +41,7 @@ configs:
       addedReview: "add.review"
       updatedReview: "update.review"
       forgotPassword: "forgot.password"
+  feign:
+    jobs: "http://jobservice:8081/v1/jobs"
+    client: "http://userservice:8080/v1/users"
+

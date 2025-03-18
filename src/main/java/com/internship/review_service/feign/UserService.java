@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "user-service",url = "http://userservice:8080/v1/users", configuration = FeignConfig.class)
+@FeignClient(name = "user-service",url = "${configs.feign.client}", configuration = FeignConfig.class)
 public interface UserService {
 
     @GetMapping("/{id}")

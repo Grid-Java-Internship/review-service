@@ -28,24 +28,11 @@ public class ReviewExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
-    @ExceptionHandler(ConstraintViolationException.class)
+    @ExceptionHandler({ConstraintViolationException.class,
+            MethodArgumentNotValidException.class})
     public ResponseEntity<ExceptionResponse> handleConstraintViolationException(ConstraintViolationException ex) {
         List<String> errorMessages = ex.getConstraintViolations().stream()
                 .map(ConstraintViolation::getMessage)
-                .toList();
-
-        ExceptionResponse errorResponse = ExceptionResponse.builder()
-                .statusCode(HttpStatus.BAD_REQUEST.value())
-                .messages(errorMessages)
-                .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ExceptionResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
-        List<String> errorMessages = ex.getBindingResult().getFieldErrors().stream()
-                .map(FieldError::getDefaultMessage)
                 .toList();
 
         ExceptionResponse errorResponse = ExceptionResponse.builder()
