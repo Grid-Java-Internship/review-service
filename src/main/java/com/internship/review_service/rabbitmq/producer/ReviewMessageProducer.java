@@ -26,15 +26,15 @@ public class ReviewMessageProducer {
      *
      * @param emailTo the String object representing the email of recipient
      */
-    public void sendAddedReviewMessage(String emailTo,Long userId){
+    public void sendAddedReviewMessage(String emailTo, Long userId) {
         log.info("{} {}", forgotPasswordKey, exchangeName);
 
         amqpTemplate.convertAndSend(exchangeName,
                 forgotPasswordKey, //temporary for testing purposes
-                createAnAddedReviewMessage(emailTo,userId));
+                createAnAddedReviewMessage(emailTo, userId));
     }
 
-    private Message createAnAddedReviewMessage(String emailTo,Long userId) {
+    private Message createAnAddedReviewMessage(String emailTo, Long userId) {
         Message message = new Message();
         message.setUserId(userId);
         message.setTitle("Added review confirmation");

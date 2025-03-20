@@ -92,19 +92,19 @@ public class AddingReviewsTests {
 
         status.setStatusId(3L);
 
-        reviewCreateDto = new ReviewCreateDto("Aaaa",3,"aaaa");
+        reviewCreateDto = new ReviewCreateDto("Aaaa", 3, "aaaa");
 
-        userReview = new UserReview(1L,status);
+        userReview = new UserReview(1L, status);
 
         userReview.setReviewerId(userId);
 
-        jobReview = new JobReview(1L,1L,status);
+        jobReview = new JobReview(1L, 1L, status);
 
         jobReview.setReviewerId(userId);
 
-        reviewDto = new ReviewDto(1L,null,1L,"aaaa","Aaaa");
+        reviewDto = new ReviewDto(1L, null, 1L, "aaaa", "Aaaa");
 
-        userDto = new UserDto(1L,"John","Doe","john.doe@gmail.com");
+        userDto = new UserDto(1L, "John", "Doe", "john.doe@gmail.com");
 
         userDtoResponseEntity = new ResponseEntity<>(
                 userDto, null, HttpStatus.OK
@@ -126,7 +126,7 @@ public class AddingReviewsTests {
 
         assertDoesNotThrow(() -> userService.getUser(userReview.getUserReviewId()));
 
-        verify(userService,atLeast(1)).getUser(userReview.getReviewerId());
+        verify(userService, atLeast(1)).getUser(userReview.getReviewerId());
         verify(reviewMapper).toEntity(reviewCreateDto);
         verify(statusRepository).findStatusByStatusId(3L);
         verify(userReviewRepository).save(userReview);
@@ -145,7 +145,7 @@ public class AddingReviewsTests {
     }
 
     @Test
-    void testAddJobReview_Success(){
+    void testAddJobReview_Success() {
         when(reviewMapper.toJobEntity(reviewCreateDto)).thenReturn(jobReview);
 
         assertDoesNotThrow(() -> userService.getUser(userReview.getUserReviewId()));
@@ -158,7 +158,7 @@ public class AddingReviewsTests {
 
         when(reviewMapper.toJobDto(jobReview)).thenReturn(reviewDto);
 
-        ReviewDto result = reviewService.addJobReview(userId,jobId,reviewCreateDto);
+        ReviewDto result = reviewService.addJobReview(userId, jobId, reviewCreateDto);
 
         assertNotNull(result);
     }
@@ -168,14 +168,14 @@ public class AddingReviewsTests {
         when(userService.getUser(userId)).thenReturn(userDtoResponseEntity);
         when(jobService.getJobById(jobId)).thenThrow(new NotFoundException("Job not found"));
 
-        assertThrows(NotFoundException.class, () -> reviewService.addJobReview(userId,jobId,reviewCreateDto));
+        assertThrows(NotFoundException.class, () -> reviewService.addJobReview(userId, jobId, reviewCreateDto));
     }
 
     @Test
     void testAddJobReview_UserNotFound() {
         when(userService.getUser(userId)).thenThrow(new NotFoundException("User not found"));
 
-        assertThrows(NotFoundException.class, () -> reviewService.addJobReview(userId,jobId,reviewCreateDto));
+        assertThrows(NotFoundException.class, () -> reviewService.addJobReview(userId, jobId, reviewCreateDto));
     }
 
     @Test
@@ -210,22 +210,22 @@ public class AddingReviewsTests {
     void deletingUserReview_Success() {
         when(userReviewRepository.findById(userId)).thenReturn(Optional.ofNullable(userReview));
 
-        assertDoesNotThrow(() -> reviewService.deleteUserReview(userId,reviewId));
+        assertDoesNotThrow(() -> reviewService.deleteUserReview(userId, reviewId));
     }
 
     @Test
     void deletingUserReview_UserNotFound() {
         when(userReviewRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> reviewService.deleteUserReview(userId,reviewId));
+        assertThrows(NotFoundException.class, () -> reviewService.deleteUserReview(userId, reviewId));
     }
 
     @Test
-    void deletingUserReview_NotSameUserId(){
+    void deletingUserReview_NotSameUserId() {
         when(userReviewRepository.findById(userId)).thenReturn(Optional.ofNullable(userReview));
 
 
-        assertThrows(UnknownUserIdException.class, () -> reviewService.deleteUserReview(2L,reviewId));
+        assertThrows(UnknownUserIdException.class, () -> reviewService.deleteUserReview(2L, reviewId));
 
     }
 

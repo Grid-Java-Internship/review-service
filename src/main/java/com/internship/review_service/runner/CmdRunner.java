@@ -25,9 +25,7 @@ public class CmdRunner implements CommandLineRunner {
         Status s3 = new Status();
         s3.setStatusType("PENDING");
 
-        statusRepository.saveAll(List.of(s,s2,s3));
-
-
+        statusRepository.saveAll(List.of(s, s2, s3));
 
 
     }

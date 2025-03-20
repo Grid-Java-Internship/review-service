@@ -1,7 +1,11 @@
 package com.internship.review_service.model;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.MappedSuperclass;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDate;
 
 
