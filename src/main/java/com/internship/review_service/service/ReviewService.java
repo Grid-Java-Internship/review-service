@@ -1,17 +1,20 @@
 package com.internship.review_service.service;
 
-import com.internship.review_service.rabbitmq.producer.AddedReviewProducer;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import com.internship.review_service.dto.ReviewCreateDto;
+import com.internship.review_service.dto.ReviewDto;
 
-@Service
-@RequiredArgsConstructor
-public class ReviewService {
+import java.util.List;
 
-    private final AddedReviewProducer addedReviewProducer;
+public interface ReviewService {
 
-    public void addNewReview(){
-        addedReviewProducer.sendMessage("BLA");
-    }
+    ReviewDto addUserReview(Long userId, ReviewCreateDto reviewCreateDto);
+
+    ReviewDto addJobReview(Long userId, Long jobId, ReviewCreateDto reviewCreateDto);
+
+    void deleteUserReview(Long userId, Long reviewId);
+
+    ReviewDto getUserReview(Long reviewId);
+
+    List<ReviewDto> getAllJobReviews(Long jobId);
 
 }
