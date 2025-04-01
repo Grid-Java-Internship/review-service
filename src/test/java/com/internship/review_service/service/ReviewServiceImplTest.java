@@ -1,5 +1,7 @@
 package com.internship.review_service.service;
 
+import com.internship.review_service.dto.request.EditRequest;
+import com.internship.review_service.dto.response.EntityRatingResponse;
 import com.internship.review_service.feign.job.JobDTO;
 import com.internship.review_service.feign.user.UserDTO;
 import com.internship.review_service.dto.request.ReviewRequest;
@@ -24,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -61,6 +64,8 @@ class ReviewServiceImplTest {
     private UserDTO userDTO;
 
     private JobDTO jobDTO;
+
+    private EditRequest editRequest;
 
     @BeforeEach
     void beforeEach() {
@@ -107,6 +112,13 @@ class ReviewServiceImplTest {
                 .dateOfPosting(java.time.LocalDate.now())
                 .experience(1)
                 .hourlyRate(1)
+                .build();
+
+        editRequest = EditRequest.builder()
+                .id(1L)
+                .userId(1L)
+                .text("Text edit")
+                .rating(1)
                 .build();
     }
 
@@ -264,5 +276,79 @@ class ReviewServiceImplTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(response, result.get(0));
+    }
+
+    @Test
+    void editReview_shouldEditReview_whenReviewIsFoundAndBelongsToUser() {
+
+        response.setRating(editRequest.getRating());
+        response.setText(editRequest.getText());
+
+        when(reviewRepository.findById(anyLong())).thenReturn(Optional.of(review));
+        when(reviewMapper.toDto(review)).thenReturn(response);
+
+        ReviewResponse result = reviewService.editReview(editRequest);
+
+        assertNotNull(result);
+        assertEquals(editRequest.getText(), result.getText());
+        assertEquals(editRequest.getRating(), result.getRating());
+    }
+
+    @Test
+    void editReview_shouldThrowException_whenReviewNotFound() {
+
+        when(reviewRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        NotFoundException ex = assertThrows(
+                NotFoundException.class,
+                () -> reviewService.editReview(editRequest)
+        );
+
+        assertEquals("Review with this id not found! id: 1", ex.getMessage());
+    }
+
+    @Test
+    void editReview_shouldThrowException_whenUserCannotEditAnotherUserReview() {
+
+        editRequest.setUserId(10L);
+
+        when(reviewRepository.findById(anyLong())).thenReturn(Optional.of(review));
+
+        ConflictException ex = assertThrows(
+                ConflictException.class,
+                () -> reviewService.editReview(editRequest)
+        );
+
+        assertEquals("User cannot edit another user's review!", ex.getMessage());
+    }
+
+    @Test
+    void getEntityRating_shouldReturnAverageRating() {
+
+        when(reviewRepository.findByReviewedIdAndReviewType(anyLong(), any(ReviewType.class)))
+                .thenReturn(List.of(review));
+
+        EntityRatingResponse result = reviewService.getEntityRating(1L, ReviewType.JOB);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals(ReviewType.JOB, result.getReviewType());
+        assertEquals(10, result.getRating());
+        assertEquals(1, result.getReviewCount());
+    }
+
+    @Test
+    void getEntityRating_shouldHandleEmptyList() {
+
+        when(reviewRepository.findByReviewedIdAndReviewType(anyLong(), any(ReviewType.class)))
+                .thenReturn(Collections.emptyList());
+
+        EntityRatingResponse result = reviewService.getEntityRating(1L, ReviewType.JOB);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals(ReviewType.JOB, result.getReviewType());
+        assertEquals(0, result.getRating());
+        assertEquals(0, result.getReviewCount());
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
@@ -17,5 +18,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             @NotNull(message = "Review type cannot be null.") ReviewType reviewType
     );
 
+    List<Review> findByReviewedIdAndReviewType(
+            @NotNull(message = "Reviewed ID cannot be null.") Long reviewedId,
+            @NotNull(message = "Review type cannot be null.") ReviewType reviewType);
+
     Page<Review> findByReviewedId(Long reviewedId, Pageable pageable);
+
 }

@@ -1,8 +1,11 @@
 package com.internship.review_service.controller;
 
+import com.internship.review_service.dto.request.EditRequest;
 import com.internship.review_service.dto.request.ReviewRequest;
+import com.internship.review_service.dto.response.EntityRatingResponse;
 import com.internship.review_service.dto.response.ReviewResponse;
 import com.internship.review_service.dto.response.SimpleMessageResponse;
+import com.internship.review_service.enums.ReviewType;
 import com.internship.review_service.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -77,9 +80,18 @@ public class ReviewController {
                 ));
     }
 
-//    @PutMapping("/edit/{id}")
-//    public ResponseEntity<Void> editReview(@PathVariable("id") Long reviewId,
-//                                           @RequestBody ReviewEditDto reviewDto) {
-//        return ResponseEntity.ok().build();
-//    }
+    @PutMapping("/edit")
+    public ResponseEntity<ReviewResponse> editReview(
+            @RequestBody EditRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(reviewService.editReview(request));
+    }
+
+    @GetMapping("/rating/{type}/{id}")
+    public ResponseEntity<EntityRatingResponse> getRating(
+            @PathVariable("type") ReviewType type,
+            @PathVariable("id") Long id
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(reviewService.getEntityRating(id, type));
+    }
 }

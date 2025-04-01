@@ -1,6 +1,8 @@
 package com.internship.review_service.service;
 
 
+import com.internship.review_service.dto.request.EditRequest;
+import com.internship.review_service.dto.response.EntityRatingResponse;
 import com.internship.review_service.feign.job.JobDTO;
 import com.internship.review_service.feign.user.UserDTO;
 import com.internship.review_service.dto.request.ReviewRequest;
@@ -23,8 +25,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
@@ -139,6 +143,63 @@ public class ReviewServiceImpl implements ReviewService {
         List<Review> reviews = reviewRepository.findByReviewedId(reviewedId, pageable).getContent();
 
         return reviews.stream().map(reviewMapper::toDto).toList();
+    }
+
+    /**
+     * Edits a review, checking that the user attempting to edit it is the same one who wrote it.
+     *
+     * @param editRequest a {@link EditRequest} object containing the new text and rating for the review
+     * @return the edited review as a {@link ReviewResponse} object
+     * @throws NotFoundException if no review is found with the given id
+     * @throws ConflictException if the user attempting to edit the review is not the same one who wrote it
+     */
+    @Override
+    public ReviewResponse editReview(EditRequest editRequest) {
+
+        Review review = reviewRepository.findById(editRequest.getId())
+                .orElseThrow(() -> new NotFoundException("Review with this id not found! id: " + editRequest.getId()));
+
+        if (!Objects.equals(review.getUserId(), editRequest.getUserId())) {
+            throw new ConflictException("User cannot edit another user's review!");
+        }
+
+        review.setText(editRequest.getText());
+        review.setRating(editRequest.getRating());
+        review.setReviewDate(LocalDate.now());
+
+        reviewRepository.save(review);
+
+        return reviewMapper.toDto(review);
+    }
+
+    /**
+     * Gets the rating of an entity (user or job).
+     *
+     * @param reviewedId the id of the entity being reviewed
+     * @param reviewType the type of review
+     * @return an EntityRatingResponse object containing the id, review count and average rating
+     * @throws NotFoundException if the entity does not exist
+     */
+    @Override
+    public EntityRatingResponse getEntityRating(Long reviewedId, ReviewType reviewType) {
+
+        List<Review> reviews = reviewRepository.findByReviewedIdAndReviewType(reviewedId, reviewType);
+
+        EntityRatingResponse response = EntityRatingResponse.builder()
+                .id(reviewedId)
+                .reviewCount(reviews.size())
+                .reviewType(reviewType)
+                .build();
+
+        double rating = reviews.isEmpty()
+                ? 0
+                : (double) reviews.stream().mapToInt(Review::getRating).sum() / reviews.size();
+
+        response.setRating(
+                rating
+        );
+
+        return response;
     }
 
     /**
