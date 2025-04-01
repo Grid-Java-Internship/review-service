@@ -1,4 +1,21 @@
 package com.internship.review_service.repository;
 
-public interface ReviewRepository {
+import com.internship.review_service.enums.ReviewType;
+import com.internship.review_service.model.Review;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface ReviewRepository extends JpaRepository<Review, Long> {
+
+    Optional<Review> findByUserIdAndReviewedIdAndReviewType(
+            @NotNull(message = "User ID cannot be null.") Long userId,
+            @NotNull(message = "Reviewed ID cannot be null.") Long reviewedId,
+            @NotNull(message = "Review type cannot be null.") ReviewType reviewType
+    );
+
+    Page<Review> findByReviewedId(Long reviewedId, Pageable pageable);
 }

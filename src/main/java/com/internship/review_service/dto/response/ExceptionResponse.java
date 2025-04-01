@@ -1,4 +1,4 @@
-package com.internship.review_service.exception;
+package com.internship.review_service.dto.response;
 
 import lombok.Builder;
 import lombok.Data;

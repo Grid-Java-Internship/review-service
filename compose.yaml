@@ -1,5 +1,5 @@
 services:
-  rev-service:
+  review-service:
     build:
       context: .
       dockerfile: Dockerfile
@@ -8,21 +8,7 @@ services:
     container_name: "review-service"
     networks:
       - global-network
-    volumes:
-      - ./src/main:/app/src/main
-    depends_on:
-      - postgres
-  postgres:
-    container_name: postgresql
-    image: 'postgres:latest'
-    environment:
-      - 'POSTGRES_DB=reviews'
-      - 'POSTGRES_PASSWORD=password'
-      - 'POSTGRES_USER=user123'
-    ports:
-      - "5432:5432"
-    networks:
-      - global-network
+
 networks:
   global-network:
     name: global-network
