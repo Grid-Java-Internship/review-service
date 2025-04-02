@@ -207,12 +207,11 @@ class ReviewServiceImplTest {
     void deleteReview_shouldReturnTrue_whenReviewIsDeletedFromDb() {
 
         when(reviewRepository.findById(anyLong())).thenReturn(Optional.of(review));
-        doNothing().when(reviewRepository).delete(review);
 
         boolean result = reviewService.deleteReview(1L, 1L);
 
         assertTrue(result);
-        verify(reviewRepository).delete(review);
+        verify(reviewRepository).save(review);
     }
 
     @Test
@@ -267,7 +266,7 @@ class ReviewServiceImplTest {
     @Test
     void getAllReviews_shouldReturnReviews_whenReviewsAreFound() {
 
-        when(reviewRepository.findByReviewedId(anyLong(), any(Pageable.class)))
+        when(reviewRepository.findByReviewedIdAndStatus(anyLong(), any(Status.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(review)));
         when(reviewMapper.toDto(review)).thenReturn(response);
 
@@ -325,8 +324,11 @@ class ReviewServiceImplTest {
     @Test
     void getEntityRating_shouldReturnAverageRating() {
 
-        when(reviewRepository.findByReviewedIdAndReviewType(anyLong(), any(ReviewType.class)))
-                .thenReturn(List.of(review));
+        when(reviewRepository.findByReviewedIdAndReviewTypeAndStatus(
+                anyLong(),
+                any(ReviewType.class),
+                any(Status.class)
+        )).thenReturn(List.of(review));
 
         EntityRatingResponse result = reviewService.getEntityRating(1L, ReviewType.JOB);
 
@@ -340,8 +342,11 @@ class ReviewServiceImplTest {
     @Test
     void getEntityRating_shouldHandleEmptyList() {
 
-        when(reviewRepository.findByReviewedIdAndReviewType(anyLong(), any(ReviewType.class)))
-                .thenReturn(Collections.emptyList());
+        when(reviewRepository.findByReviewedIdAndReviewTypeAndStatus(
+                anyLong(),
+                any(ReviewType.class),
+                any(Status.class)
+        )).thenReturn(Collections.emptyList());
 
         EntityRatingResponse result = reviewService.getEntityRating(1L, ReviewType.JOB);
 

@@ -28,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
@@ -64,7 +63,12 @@ public class ReviewServiceImpl implements ReviewService {
                 request.getReviewedId(),
                 request.getReviewType()
         ).ifPresent(exists -> {
-            throw new ConflictException("You have already reviewed this " + request.getReviewType());
+            if (exists.getStatus().equals(Status.RECEIVED) ||
+                exists.getStatus().equals(Status.IN_REVIEW) ||
+                exists.getStatus().equals(Status.ACCEPTED)
+            ) {
+                throw new ConflictException("You have already reviewed this " + request.getReviewType());
+            }
         });
 
         if (ReviewType.USER.equals(request.getReviewType()) && Objects.equals(request.getUserId(), request.getReviewedId())) {
@@ -108,7 +112,9 @@ public class ReviewServiceImpl implements ReviewService {
             throw new ConflictException("User cannot delete another user's review!");
         }
 
-        reviewRepository.delete(review);
+        review.setStatus(Status.DELETED);
+
+        reviewRepository.save(review);
 
         return true;
     }
@@ -140,7 +146,11 @@ public class ReviewServiceImpl implements ReviewService {
     public List<ReviewResponse> getAllReviews(Long reviewedId, int page) {
         Pageable pageable = PageRequest.of(page, 10);
 
-        List<Review> reviews = reviewRepository.findByReviewedId(reviewedId, pageable).getContent();
+        List<Review> reviews = reviewRepository.findByReviewedIdAndStatus(
+                reviewedId,
+                Status.ACCEPTED,
+                pageable
+        ).getContent();
 
         return reviews.stream().map(reviewMapper::toDto).toList();
     }
@@ -183,7 +193,11 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public EntityRatingResponse getEntityRating(Long reviewedId, ReviewType reviewType) {
 
-        List<Review> reviews = reviewRepository.findByReviewedIdAndReviewType(reviewedId, reviewType);
+        List<Review> reviews = reviewRepository.findByReviewedIdAndReviewTypeAndStatus(
+                reviewedId,
+                reviewType,
+                Status.ACCEPTED
+        );
 
         EntityRatingResponse response = EntityRatingResponse.builder()
                 .id(reviewedId)

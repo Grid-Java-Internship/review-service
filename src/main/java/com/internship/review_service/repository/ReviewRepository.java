@@ -1,6 +1,7 @@
 package com.internship.review_service.repository;
 
 import com.internship.review_service.enums.ReviewType;
+import com.internship.review_service.enums.Status;
 import com.internship.review_service.model.Review;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
@@ -18,10 +19,22 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             @NotNull(message = "Review type cannot be null.") ReviewType reviewType
     );
 
-    List<Review> findByReviewedIdAndReviewType(
+    Optional<Review> findByUserIdAndReviewedIdAndReviewTypeAndStatus(
+            @NotNull(message = "User ID cannot be null.") Long userId,
             @NotNull(message = "Reviewed ID cannot be null.") Long reviewedId,
-            @NotNull(message = "Review type cannot be null.") ReviewType reviewType);
+            @NotNull(message = "Review type cannot be null.") ReviewType reviewType,
+            @NotNull(message = "Status cannot be null.") Status status
+    );
 
-    Page<Review> findByReviewedId(Long reviewedId, Pageable pageable);
+    List<Review> findByReviewedIdAndReviewTypeAndStatus(
+            @NotNull(message = "Reviewed ID cannot be null.") Long reviewedId,
+            @NotNull(message = "Review type cannot be null.") ReviewType reviewType,
+            @NotNull(message = "Status cannot be null.") Status status
+    );
+
+    Page<Review> findByReviewedIdAndStatus(
+            @NotNull(message = "Reviewed ID cannot be null.") Long reviewedId,
+            @NotNull(message = "Status cannot be null.") Status status,
+            Pageable pageable);
 
 }
