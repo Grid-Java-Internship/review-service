@@ -1,4 +1,4 @@
-package com.internship.review_service.dto;
+package com.internship.review_service.feign.job;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,8 +11,10 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 @Builder
-public class JobResponse {
+public class JobDTO {
     private Long id;
+
+    private Long userId;
 
     private String title;
 

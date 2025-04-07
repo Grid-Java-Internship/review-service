@@ -1,110 +1,97 @@
 package com.internship.review_service.controller;
 
-import com.internship.review_service.dto.ReviewCreateDto;
-import com.internship.review_service.dto.ReviewDto;
-import com.internship.review_service.dto.ReviewEditDto;
-import com.internship.review_service.exception.NotFoundException;
-import com.internship.review_service.exception.UnknownUserIdException;
+import com.internship.review_service.dto.request.EditRequest;
+import com.internship.review_service.dto.request.ReviewRequest;
+import com.internship.review_service.dto.response.EntityRatingResponse;
+import com.internship.review_service.dto.response.ReviewResponse;
+import com.internship.review_service.dto.response.SimpleMessageResponse;
+import com.internship.review_service.enums.ReviewType;
 import com.internship.review_service.service.ReviewService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("v1/review/")
+@RequestMapping("v1/review")
 @RequiredArgsConstructor
 public class ReviewController {
 
+    private static final String REVIEW_SUCCESS = "Reviewed successfully";
+    private static final String REVIEW_FAILED = "Review failed";
+    private static final String DELETE_SUCCESS = "Review deleted successfully";
+    private static final String DELETE_FAILED = "Review deletion failed";
+
     private final ReviewService reviewService;
 
-    /**
-     * Retrieves a user review by its id.
-     *
-     * @param reviewId the id of the review
-     * @return the found review
-     */
-    @GetMapping("user/{revId}")
-    public ResponseEntity<ReviewDto> getUserReview(@PathVariable("revId") Long reviewId) {
+    @PostMapping
+    public ResponseEntity<SimpleMessageResponse> addReview(
+            @RequestBody ReviewRequest request)
+    {
+        boolean result = reviewService.addReview(request);
 
-        return ResponseEntity.ok()
-                .body(reviewService.getUserReview(reviewId));
+        String message = result ? REVIEW_SUCCESS : REVIEW_FAILED;
+        HttpStatus status = result ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST;
+
+        SimpleMessageResponse response = SimpleMessageResponse.builder()
+                .statusCode(status.value())
+                .message(message)
+                .success(result)
+                .build();
+
+        return ResponseEntity.status(status).body(response);
     }
 
-    /**
-     * Retrieves all reviews for a given job.
-     *
-     * @param jobid the id of the job
-     * @return a list of all reviews for the given job
-     */
-    @GetMapping("job/{jobId}")
-    public List<ReviewDto> getJobReviews(@PathVariable("jobId") Long jobid) {
-        return reviewService.getAllJobReviews(jobid);
-    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<SimpleMessageResponse> deleteReview(
+            @PathVariable("id") Long id,
+            @RequestParam("userId") Long userId
+    ) {
+        boolean result = reviewService.deleteReview(userId, id);
 
-    /**
-     * Creates a new user review.
-     *
-     * @param userId          the id of the user creating the review
-     * @param reviewCreateDto the review data
-     * @return the created review wrapped in a ResponseEntity
-     */
-    @PostMapping("user/addreview/{id}")
-    public ResponseEntity<Void> createUserReview(@PathVariable("id") Long userId,
-                                                 @RequestBody ReviewCreateDto reviewCreateDto) {
+        String message = result ? DELETE_SUCCESS : DELETE_FAILED;
+        HttpStatus status = result ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST;
 
-        reviewService.addUserReview(userId, reviewCreateDto);
+        SimpleMessageResponse response = SimpleMessageResponse.builder()
+                .statusCode(status.value())
+                .message(message)
+                .success(result)
+                .build();
 
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * Creates a new job review.
-     *
-     * @param userId          the id of the user creating the review
-     * @param jobId           the id of the job being reviewed
-     * @param reviewCreateDto the review data
-     * @return the created review wrapped in a ResponseEntity
-     */
-    @PostMapping("job/addreview/{id}/{jobid}")
-    public ResponseEntity<Void> createJobReview(@PathVariable("id") Long userId,
-                                                @PathVariable("jobid") Long jobId,
-                                                @RequestBody ReviewCreateDto reviewCreateDto) {
-
-        reviewService.addJobReview(userId, jobId, reviewCreateDto);
-
-        return ResponseEntity.ok().build();
-    }
-
-    @PutMapping("/edit/{id}")
-    public ResponseEntity<Void> editReview(@PathVariable("id") Long reviewId,
-                                           @RequestBody ReviewEditDto reviewDto) {
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(status).body(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Page<ReviewDto>> getAllReviewsForAUser(@PathVariable("id") Long userId) {
-
-        return ResponseEntity.ok().build();
+    public ResponseEntity<ReviewResponse> getReview(@PathVariable("id") Long id) {
+        return ResponseEntity.status(HttpStatus.OK).body(reviewService.getReview(id));
     }
 
-    /**
-     * Deletes a user review by its id, but only if the user requesting the deletion is the same as the user that created the review.
-     *
-     * @param reviewId the id of the review to be deleted
-     * @param userId   the id of the user requesting the deletion
-     * @return an empty ResponseEntity
-     * @throws NotFoundException      if no review with the given id exists
-     * @throws UnknownUserIdException if the user requesting the deletion is not the same as the user that created the review
-     */
-    @DeleteMapping("user/{revid}/{id}")
-    public ResponseEntity<Void> deleteReview(@PathVariable("revid") Long reviewId, @PathVariable("id") Long userId) {
-
-        reviewService.deleteUserReview(userId, reviewId);
-
-        return ResponseEntity.ok().build();
+    @GetMapping("/entity/{id}")
+    public ResponseEntity<List<ReviewResponse>> getEntityReviews(
+            @PathVariable("id") Long reviewedId,
+            @RequestParam("page") int page
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(reviewService.getAllReviews(
+                        reviewedId,
+                        page
+                ));
     }
 
+    @PutMapping("/edit")
+    public ResponseEntity<ReviewResponse> editReview(
+            @RequestBody EditRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(reviewService.editReview(request));
+    }
+
+    @GetMapping("/rating/{type}/{id}")
+    public ResponseEntity<EntityRatingResponse> getRating(
+            @PathVariable("type") ReviewType type,
+            @PathVariable("id") Long id
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(reviewService.getEntityRating(id, type));
+    }
 }

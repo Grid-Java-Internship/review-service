@@ -1,20 +1,25 @@
 package com.internship.review_service.service;
 
-import com.internship.review_service.dto.ReviewCreateDto;
-import com.internship.review_service.dto.ReviewDto;
+import com.internship.review_service.dto.request.EditRequest;
+import com.internship.review_service.dto.request.ReviewRequest;
+import com.internship.review_service.dto.response.EntityRatingResponse;
+import com.internship.review_service.dto.response.ReviewResponse;
+import com.internship.review_service.enums.ReviewType;
 
 import java.util.List;
 
 public interface ReviewService {
 
-    ReviewDto addUserReview(Long userId, ReviewCreateDto reviewCreateDto);
+    Boolean addReview(ReviewRequest reviewRequest);
 
-    ReviewDto addJobReview(Long userId, Long jobId, ReviewCreateDto reviewCreateDto);
+    Boolean deleteReview(Long userId, Long reviewId);
 
-    void deleteUserReview(Long userId, Long reviewId);
+    ReviewResponse getReview(Long reviewId);
 
-    ReviewDto getUserReview(Long reviewId);
+    List<ReviewResponse> getAllReviews(Long reviewedId, int page);
 
-    List<ReviewDto> getAllJobReviews(Long jobId);
+    ReviewResponse editReview(EditRequest editRequest);
+
+    EntityRatingResponse getEntityRating(Long reviewedId, ReviewType reviewType);
 
 }

@@ -1,29 +1,35 @@
 package com.internship.review_service.service;
 
 
-import com.internship.review_service.dto.ReviewCreateDto;
-import com.internship.review_service.dto.ReviewDto;
-import com.internship.review_service.dto.UserDto;
-import com.internship.review_service.exception.NoReviewsOnResource;
+import com.internship.review_service.dto.request.EditRequest;
+import com.internship.review_service.dto.response.EntityRatingResponse;
+import com.internship.review_service.feign.job.JobDTO;
+import com.internship.review_service.feign.user.UserDTO;
+import com.internship.review_service.dto.request.ReviewRequest;
+import com.internship.review_service.dto.response.ReviewResponse;
+import com.internship.review_service.enums.ReviewType;
+import com.internship.review_service.enums.Status;
+import com.internship.review_service.exception.ConflictException;
 import com.internship.review_service.exception.NotFoundException;
-import com.internship.review_service.exception.UnknownUserIdException;
-import com.internship.review_service.feign.JobService;
-import com.internship.review_service.feign.UserService;
+import com.internship.review_service.feign.job.JobService;
+import com.internship.review_service.feign.user.UserService;
 import com.internship.review_service.mapper.ReviewMapper;
-import com.internship.review_service.model.JobReview;
-import com.internship.review_service.model.UserReview;
+import com.internship.review_service.model.Review;
 import com.internship.review_service.rabbitmq.producer.ReviewMessageProducer;
-import com.internship.review_service.repository.JobReviewRepository;
-import com.internship.review_service.repository.StatusRepository;
-import com.internship.review_service.repository.UserReviewRepository;
-import jakarta.transaction.Transactional;
+import com.internship.review_service.repository.ReviewRepository;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.Objects;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReviewServiceImpl implements ReviewService {
@@ -32,123 +38,219 @@ public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewMapper reviewMapper;
 
-    private final UserReviewRepository userReviewRepository;
+    private final ReviewRepository reviewRepository;
 
     private final JobService jobService;
-
-    private final JobReviewRepository jobReviewRepository;
-
-    private final StatusRepository statusRepository;
 
     private final UserService userService;
 
     /**
-     * Creates a new user review.
+     * Adds a review based on the given ReviewRequest. Validates the request to ensure
+     * that a user is not reviewing themselves and that the reviewed entity exists.
+     * Transforms the request into a Review entity, sets its status to ACCEPTED,
+     * saves it to the repository, and sends a notification message.
      *
-     * @param userId          the id of the user creating the review
-     * @param reviewCreateDto the review data
-     * @return the created review
+     * @param request the ReviewRequest containing details of the review
+     * @return true if the review is successfully added
+     * @throws ConflictException if the user attempts to review themselves
+     * @throws NotFoundException if the user or reviewed entity is not found
      */
+    @Override
+    public Boolean addReview(ReviewRequest request) {
+
+        reviewRepository.findByUserIdAndReviewedIdAndReviewType(
+                request.getUserId(),
+                request.getReviewedId(),
+                request.getReviewType()
+        ).ifPresent(exists -> {
+            if (exists.getStatus().equals(Status.RECEIVED) ||
+                exists.getStatus().equals(Status.IN_REVIEW) ||
+                exists.getStatus().equals(Status.ACCEPTED)
+            ) {
+                throw new ConflictException("You have already reviewed this " + request.getReviewType());
+            }
+        });
+
+        if (ReviewType.USER.equals(request.getReviewType()) && Objects.equals(request.getUserId(), request.getReviewedId())) {
+            throw new ConflictException("User cannot review themselves.");
+        }
+
+        try {
+            UserDTO user = userService.getUser(request.getUserId());
+
+            exists(request.getUserId(), request.getReviewedId(), request.getReviewType());
+            Review review = reviewMapper.toEntity(request);
+            review.setStatus(Status.ACCEPTED);
+
+            reviewRepository.save(review);
+            reviewMessageProducer.sendAddedReviewMessage(user.getEmail(), request.getUserId());
+
+            log.info("User {} reviewed {} with type {}", request.getUserId(), request.getReviewedId(), request.getReviewType());
+            return true;
+        } catch (FeignException.NotFound e) {
+            throw new NotFoundException("User with this id not found! id: " + request.getUserId());
+        }
+    }
+
+    /**
+     * Deletes a review if it exists and the user has permission to delete it.
+     *
+     * @param userId the ID of the user attempting to delete the review
+     * @param reviewId the ID of the review to be deleted
+     * @return true if the review was successfully deleted
+     * @throws NotFoundException if the review with the given ID is not found
+     * @throws ConflictException if the user does not have permission to delete the review
+     */
+    @Override
     @Transactional
-    @Override
-    public ReviewDto addUserReview(Long userId, ReviewCreateDto reviewCreateDto) {
+    public Boolean deleteReview(Long userId, Long reviewId) {
 
-        UserDto user = userService.getUser(userId).getBody();
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new NotFoundException("Review with this id not found! id: " + reviewId));
 
-        UserReview review = reviewMapper.toEntity(reviewCreateDto);
-        review.setStatusId(statusRepository.findStatusByStatusId(3L));
-        review.setReviewerId(userId);
+        if (!Objects.equals(review.getUserId(), userId)) {
+            throw new ConflictException("User cannot delete another user's review!");
+        }
 
-        reviewMessageProducer.sendAddedReviewMessage(user.email(), userId);
+        review.setStatus(Status.DELETED);
 
-        return reviewMapper.toDto(userReviewRepository.save(review));
+        reviewRepository.save(review);
+
+        return true;
     }
 
     /**
-     * Creates a new job review.
+     * Retrieves a review by its unique identifier.
      *
-     * @param userId          the id of the user creating the review
-     * @param jobId           the id of the job being reviewed
-     * @param reviewCreateDto the review data
-     * @return the created review
+     * @param reviewId the id of the review to retrieve
+     * @return a ReviewResponse object representing the review
+     * @throws NotFoundException if no review is found with the given id
      */
-    @Transactional
     @Override
-    public ReviewDto addJobReview(Long userId, Long jobId, ReviewCreateDto reviewCreateDto) {
-        UserDto user = userService.getUser(userId).getBody();
+    public ReviewResponse getReview(Long reviewId) {
 
-        jobService.getJobById(jobId);
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new NotFoundException("Review with this id not found! id: " + reviewId));
 
-        JobReview review = reviewMapper.toJobEntity(reviewCreateDto);
-
-        review.setReviewerId(userId);
-
-        review.setJobId(jobId);
-
-        reviewMessageProducer.sendAddedReviewMessage(user.email(), userId);
-
-        return reviewMapper.toJobDto(jobReviewRepository.save(review));
+        return reviewMapper.toDto(review);
     }
 
     /**
-     * Deletes a user review by its id, but only if the user requesting the deletion is the same as the user that created the review.
+     * Gets all reviews for a given reviewed entity (user or job).
      *
-     * @param userId   the id of the user requesting the deletion
-     * @param reviewId the id of the review to be deleted
-     * @throws NotFoundException      if no review with the given id exists
-     * @throws UnknownUserIdException if the user requesting the deletion is not the same as the user that created the review
+     * @param reviewedId the id of the entity being reviewed
+     * @param page the page number to retrieve
+     * @return a list of ReviewResponse objects, each representing a review
      */
-    @Transactional
     @Override
-    public void deleteUserReview(Long userId, Long reviewId) { //Integrate the logic with token for the userId?
+    public List<ReviewResponse> getAllReviews(Long reviewedId, int page) {
+        Pageable pageable = PageRequest.of(page, 10);
 
-        Optional<UserReview> review = userReviewRepository.findById(reviewId);
+        List<Review> reviews = reviewRepository.findByReviewedIdAndStatus(
+                reviewedId,
+                Status.ACCEPTED,
+                pageable
+        ).getContent();
 
-        if (review.isEmpty()) throw new NotFoundException("Review with this id not found! id: " + reviewId);
-
-        if (!review.get().getReviewerId().equals(userId))
-            throw new UnknownUserIdException("This user does not own this review! id: " + userId);
-
-        userReviewRepository.delete(review.get());
+        return reviews.stream().map(reviewMapper::toDto).toList();
     }
 
     /**
-     * Finds a user review by its id.
+     * Edits a review, checking that the user attempting to edit it is the same one who wrote it.
      *
-     * @param reviewId the id of the review
-     * @return the found review
-     * @throws NotFoundException if no review with the given id exists
+     * @param editRequest a {@link EditRequest} object containing the new text and rating for the review
+     * @return the edited review as a {@link ReviewResponse} object
+     * @throws NotFoundException if no review is found with the given id
+     * @throws ConflictException if the user attempting to edit the review is not the same one who wrote it
      */
     @Override
-    public ReviewDto getUserReview(Long reviewId) {
+    public ReviewResponse editReview(EditRequest editRequest) {
 
-        Optional<UserReview> review = userReviewRepository.findById(reviewId);
+        Review review = reviewRepository.findById(editRequest.getId())
+                .orElseThrow(() -> new NotFoundException("Review with this id not found! id: " + editRequest.getId()));
 
-        if (review.isEmpty()) throw new NotFoundException("Review with this id not found! id: " + reviewId);
+        if (!Objects.equals(review.getUserId(), editRequest.getUserId())) {
+            throw new ConflictException("User cannot edit another user's review!");
+        }
 
+        review.setText(editRequest.getText());
+        review.setRating(editRequest.getRating());
+        review.setReviewDate(LocalDate.now());
 
-        return reviewMapper.toDto(review.get());
+        reviewRepository.save(review);
+
+        return reviewMapper.toDto(review);
     }
 
     /**
-     * Finds all reviews for a given job.
+     * Gets the rating of an entity (user or job).
      *
-     * @param jobId the id of the job
-     * @return a list of all reviews for the given job
-     * @throws NoReviewsOnResource if no reviews are found for the given job
+     * @param reviewedId the id of the entity being reviewed
+     * @param reviewType the type of review
+     * @return an EntityRatingResponse object containing the id, review count and average rating
+     * @throws NotFoundException if the entity does not exist
      */
     @Override
-    public List<ReviewDto> getAllJobReviews(Long jobId) {
+    public EntityRatingResponse getEntityRating(Long reviewedId, ReviewType reviewType) {
 
-        jobService.getJobById(jobId);
+        List<Review> reviews = reviewRepository.findByReviewedIdAndReviewTypeAndStatus(
+                reviewedId,
+                reviewType,
+                Status.ACCEPTED
+        );
 
-        List<JobReview> jobReviews = jobReviewRepository.findAllByJobId(jobId);
+        EntityRatingResponse response = EntityRatingResponse.builder()
+                .id(reviewedId)
+                .reviewCount(reviews.size())
+                .reviewType(reviewType)
+                .build();
 
-        if (jobReviews.isEmpty()) throw new NoReviewsOnResource("No reviews found for this job! id: " + jobId);
+        double rating = reviews.isEmpty()
+                ? 0
+                : (double) reviews.stream().mapToInt(Review::getRating).sum() / reviews.size();
 
-        Stream<ReviewDto> streamOfJobReviews = jobReviews.stream().map(reviewMapper::toJobDto);
+        response.setRating(
+                rating
+        );
 
-        return streamOfJobReviews.toList();
+        return response;
     }
 
+    /**
+     * Checks if a user with the given id exists in the user service,
+     * and if the given job id exists in the job service.
+     * If the user id and the job id are the same, a
+     * ConflictException is thrown.
+     *
+     * @param userId the id of the user
+     * @param reviewedId the id of the job or user being reviewed
+     * @param type the type of review
+     * @throws NotFoundException if the user or job does not exist
+     * @throws ConflictException if the user is trying to review their own job
+     */
+    private void exists(Long userId, Long reviewedId, ReviewType type) {
+
+        JobDTO job;
+
+        switch (type) {
+            case USER:
+                try {
+                    userService.getUser(reviewedId);
+                    break;
+                } catch (FeignException.NotFound e) {
+                    throw new NotFoundException("User with this id not found! id: " + userId);
+                }
+            case JOB:
+                try {
+                    job = jobService.getJobById(reviewedId);
+                } catch (FeignException.NotFound e) {
+                    throw new NotFoundException("Job with this id not found! id: " + userId);
+                }
+
+                if (Objects.equals(job.getUserId(), userId)) {
+                    throw new ConflictException("User cannot review their own job! id: " + userId);
+                }
+                break;
+        }
+    }
 }
