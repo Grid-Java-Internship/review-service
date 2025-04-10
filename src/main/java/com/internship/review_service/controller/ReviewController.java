@@ -68,13 +68,15 @@ public class ReviewController {
         return ResponseEntity.status(HttpStatus.OK).body(reviewService.getReview(id));
     }
 
-    @GetMapping("/entity/{id}")
+    @GetMapping("/{type}/{id}")
     public ResponseEntity<List<ReviewResponse>> getEntityReviews(
+            @PathVariable("type") ReviewType type,
             @PathVariable("id") Long reviewedId,
             @RequestParam("page") int page
     ) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(reviewService.getAllReviews(
+                        type,
                         reviewedId,
                         page
                 ));

@@ -16,7 +16,7 @@ public interface ReviewService {
 
     ReviewResponse getReview(Long reviewId);
 
-    List<ReviewResponse> getAllReviews(Long reviewedId, int page);
+    List<ReviewResponse> getAllReviews(ReviewType type, Long reviewedId, int page);
 
     ReviewResponse editReview(EditRequest editRequest);
 

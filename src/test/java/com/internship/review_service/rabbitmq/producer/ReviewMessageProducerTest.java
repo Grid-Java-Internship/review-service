@@ -26,6 +26,6 @@ class ReviewMessageProducerTest {
 
         reviewMessageProducer.sendAddedReviewMessage(emailTo, userId);
 
-        verify(amqpTemplate, times(1)).convertAndSend(eq("notifications"), eq("added.review"), any(Message.class));
+        verify(amqpTemplate, times(1)).convertAndSend(eq("notifications"), eq("addedReview"), any(Message.class));
     }
 }
