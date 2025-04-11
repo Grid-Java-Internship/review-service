@@ -6,7 +6,7 @@ spring:
   datasource:
     url: jdbc:${DB_TYPE:postgresql}://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:review_service}
     username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:postgres}
+    password: ${DB_PASSWORD:mikser1234567890}
   jpa:
     hibernate:
       ddl-auto: update
@@ -39,3 +39,25 @@ management:
 microservicesUrls:
   user-service: "http://user-service:8081"
   job-service: "http://job-service:8082"
+
+security:
+  paths:
+    permittedRequestsForAllUsers:
+      - method: GET
+        pattern: /v1/review/{id}
+      - method: GET
+        pattern: /v1/review/entity/{id}
+      - method: GET
+        pattern: /v1/review/rating/{type}/{id}
+
+    permittedRequestsForUsersOrAdminOrSuperAdmin:
+      - method: POST
+        pattern: /v1/review
+      - method: DELETE
+        pattern: /v1/review/{id}
+
+    permittedRequestsForAdminOrSuperAdmin:
+      - method: PUT
+        pattern: /v1/review/edit
+
+    permittedRequestForSuperAdmin: [ ]
