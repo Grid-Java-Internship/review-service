@@ -5,8 +5,8 @@ spring:
     name: ${SPRING_APP_NAME:review-service}
   datasource:
     url: jdbc:${DB_TYPE:postgresql}://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:review_service}
-    username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:mikser1234567890}
+    username: ${DB_USER:pgAdmin}
+    password: ${DB_PASSWORD:password}
   jpa:
     hibernate:
       ddl-auto: update

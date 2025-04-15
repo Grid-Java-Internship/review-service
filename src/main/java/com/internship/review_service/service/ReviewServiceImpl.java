@@ -143,12 +143,13 @@ public class ReviewServiceImpl implements ReviewService {
      * @return a list of ReviewResponse objects, each representing a review
      */
     @Override
-    public List<ReviewResponse> getAllReviews(Long reviewedId, int page) {
+    public List<ReviewResponse> getAllReviews(ReviewType type, Long reviewedId, int page) {
         Pageable pageable = PageRequest.of(page, 10);
 
-        List<Review> reviews = reviewRepository.findByReviewedIdAndStatus(
+        List<Review> reviews = reviewRepository.findByReviewedIdAndStatusAndReviewType(
                 reviewedId,
                 Status.ACCEPTED,
+                type,
                 pageable
         ).getContent();
 

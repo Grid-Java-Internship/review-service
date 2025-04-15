@@ -28,8 +28,7 @@ public class ReviewController {
 
     @PostMapping
     public ResponseEntity<SimpleMessageResponse> addReview(
-            @RequestBody ReviewRequest request)
-    {
+            @RequestBody ReviewRequest request) {
         boolean result = reviewService.addReview(request);
 
         String message = result ? REVIEW_SUCCESS : REVIEW_FAILED;
@@ -68,13 +67,15 @@ public class ReviewController {
         return ResponseEntity.status(HttpStatus.OK).body(reviewService.getReview(id));
     }
 
-    @GetMapping("/entity/{id}")
+    @GetMapping("/{type}/{id}")
     public ResponseEntity<List<ReviewResponse>> getEntityReviews(
+            @PathVariable("type") ReviewType type,
             @PathVariable("id") Long reviewedId,
-            @RequestParam("page") int page
+            @RequestParam(value = "page", defaultValue = "0") int page
     ) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(reviewService.getAllReviews(
+                        type,
                         reviewedId,
                         page
                 ));

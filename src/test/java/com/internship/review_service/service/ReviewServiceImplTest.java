@@ -266,11 +266,11 @@ class ReviewServiceImplTest {
     @Test
     void getAllReviews_shouldReturnReviews_whenReviewsAreFound() {
 
-        when(reviewRepository.findByReviewedIdAndStatus(anyLong(), any(Status.class), any(Pageable.class)))
+        when(reviewRepository.findByReviewedIdAndStatusAndReviewType(anyLong(), any(Status.class), any(ReviewType.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(review)));
         when(reviewMapper.toDto(review)).thenReturn(response);
 
-        List<ReviewResponse> result = reviewService.getAllReviews(1L, 0);
+        List<ReviewResponse> result = reviewService.getAllReviews(ReviewType.USER, 1L, 0);
 
         assertNotNull(result);
         assertEquals(1, result.size());

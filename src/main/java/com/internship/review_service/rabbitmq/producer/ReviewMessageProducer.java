@@ -14,7 +14,7 @@ public class ReviewMessageProducer {
     private final AmqpTemplate amqpTemplate;
 
     public void sendAddedReviewMessage(String emailTo, Long userId) {
-        amqpTemplate.convertAndSend("notifications", "added.review", createAnAddedReviewMessage(emailTo, userId));
+        amqpTemplate.convertAndSend("reviews", "addedReview", createAnAddedReviewMessage(emailTo, userId));
     }
 
     private Message createAnAddedReviewMessage(String emailTo, Long userId) {
