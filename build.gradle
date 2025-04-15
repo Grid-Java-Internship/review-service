@@ -21,19 +21,31 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven {
+		name = "GitHubPackages"
+		url = uri("https://maven.pkg.github.com/Grid-Java-Internship/maven-libraries")
+		credentials {
+			println("GITHUB_USER: ${project.findProperty('githubUsername')}")
+			println("GITHUB_USER: ${project.findProperty('githubToken')}")
+			username = project.findProperty('githubUsername')
+			password = project.findProperty('githubToken')
+		}
+	}
 }
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-amqp', version: '3.4.3'
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-mail', version: '3.4.3'
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-jdbc', version: '3.4.3'
 	implementation group: 'org.mapstruct', name: 'mapstruct', version: '1.6.3'
 	implementation group: 'org.mapstruct', name: 'mapstruct-processor', version: '1.6.3'
-	implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-openfeign', version: '4.2.0'
+	implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-openfeign', version: '4.2.1'
 	implementation group: 'jakarta.validation', name: 'jakarta.validation-api', version: '3.1.1'
+	implementation 'com.internship:authentication_library:0.0.9-SNAPSHOT'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
