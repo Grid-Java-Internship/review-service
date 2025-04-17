@@ -22,6 +22,8 @@ spring:
     queues:
       producer-queues:
         added-review: ${RABBITMQ_QUEUE_ADDED_REVIEW:added-review}
+      enableReviews: ${RABBITMQ_QUEUE_ENABLE_REVIEWS:enableJobReviewsQueue}
+      disableReviews: ${RABBITMQ_QUEUE_DISABLE_REVIEWS:disableJobReviewsQueue}
 
 server:
   port: 8084
