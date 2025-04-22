@@ -40,3 +40,25 @@ microservicesUrls:
   user-service: "http://user-service:8081"
   job-service: "http://job-service:8082"
   reservation-service: "http://reservation-service:8083"
+
+security:
+  paths:
+    permittedRequestsForAllUsers:
+      - method: GET
+        pattern: /v1/review/{id}
+      - method: GET
+        pattern: /v1/review/entity/{id}
+      - method: GET
+        pattern: /v1/review/rating/{type}/{id}
+
+    permittedRequestsForUsersOrAdminOrSuperAdmin:
+      - method: POST
+        pattern: /v1/review
+      - method: DELETE
+        pattern: /v1/review/{id}
+
+    permittedRequestsForAdminOrSuperAdmin:
+      - method: PUT
+        pattern: /v1/review/edit
+
+    permittedRequestForSuperAdmin: [ ]
