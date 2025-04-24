@@ -239,13 +239,13 @@ public class ReviewServiceImpl implements ReviewService {
                     userService.getUser(reviewedId);
                     break;
                 } catch (FeignException.NotFound e) {
-                    throw new NotFoundException("User with this id not found! id: " + userId);
+                    throw new NotFoundException("User with this id not found! id: " + reviewedId);
                 }
             case JOB:
                 try {
                     job = jobService.getJobById(reviewedId);
                 } catch (FeignException.NotFound e) {
-                    throw new NotFoundException("Job with this id not found! id: " + userId);
+                    throw new NotFoundException("Job with this id not found! id: " + reviewedId);
                 }
 
                 if (Objects.equals(job.getUserId(), userId)) {
