@@ -80,6 +80,7 @@ public class ReviewServiceImpl implements ReviewService {
 
             exists(userId, request.getReviewedId(), request.getReviewType());
             Review review = reviewMapper.toEntity(request);
+            review.setUserId(userId);
             review.setStatus(Status.ACCEPTED);
 
             reviewRepository.save(review);
