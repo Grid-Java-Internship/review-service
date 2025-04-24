@@ -117,7 +117,7 @@ public class ReviewExceptionHandler {
      */
     @ExceptionHandler({Exception.class})
     public ResponseEntity<ExceptionResponse> handleException(Exception ex) {
-
+        log.error("Internal server error: {}", ex.getMessage(), ex);
         String errorMessage = "Request failed because of an internal problem. " +
                 "Please contact support or your administrator. Error: " + ex.getMessage();
 

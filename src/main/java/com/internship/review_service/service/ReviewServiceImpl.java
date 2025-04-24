@@ -56,10 +56,10 @@ public class ReviewServiceImpl implements ReviewService {
      * @throws NotFoundException if the user or reviewed entity is not found
      */
     @Override
-    public Boolean addReview(ReviewRequest request) {
+    public Boolean addReview(ReviewRequest request, Long userId) {
 
         reviewRepository.findByUserIdAndReviewedIdAndReviewType(
-                request.getUserId(),
+                userId,
                 request.getReviewedId(),
                 request.getReviewType()
         ).ifPresent(exists -> {
@@ -71,24 +71,24 @@ public class ReviewServiceImpl implements ReviewService {
             }
         });
 
-        if (ReviewType.USER.equals(request.getReviewType()) && Objects.equals(request.getUserId(), request.getReviewedId())) {
+        if (ReviewType.USER.equals(request.getReviewType()) && Objects.equals(userId, request.getReviewedId())) {
             throw new ConflictException("User cannot review themselves.");
         }
 
         try {
-            UserDTO user = userService.getUser(request.getUserId());
+            UserDTO user = userService.getUser(userId);
 
-            exists(request.getUserId(), request.getReviewedId(), request.getReviewType());
+            exists(userId, request.getReviewedId(), request.getReviewType());
             Review review = reviewMapper.toEntity(request);
             review.setStatus(Status.ACCEPTED);
 
             reviewRepository.save(review);
-            reviewMessageProducer.sendAddedReviewMessage(user.getEmail(), request.getUserId());
+            reviewMessageProducer.sendAddedReviewMessage(user.getEmail(), userId);
 
-            log.info("User {} reviewed {} with type {}", request.getUserId(), request.getReviewedId(), request.getReviewType());
+            log.info("User {} reviewed {} with type {}", userId, request.getReviewedId(), request.getReviewType());
             return true;
         } catch (FeignException.NotFound e) {
-            throw new NotFoundException("User with this id not found! id: " + request.getUserId());
+            throw new NotFoundException("User with this id not found! id: " + userId);
         }
     }
 
@@ -165,12 +165,12 @@ public class ReviewServiceImpl implements ReviewService {
      * @throws ConflictException if the user attempting to edit the review is not the same one who wrote it
      */
     @Override
-    public ReviewResponse editReview(EditRequest editRequest) {
+    public ReviewResponse editReview(EditRequest editRequest, Long userId) {
 
         Review review = reviewRepository.findById(editRequest.getId())
                 .orElseThrow(() -> new NotFoundException("Review with this id not found! id: " + editRequest.getId()));
 
-        if (!Objects.equals(review.getUserId(), editRequest.getUserId())) {
+        if (!Objects.equals(review.getUserId(), userId)) {
             throw new ConflictException("User cannot edit another user's review!");
         }
 

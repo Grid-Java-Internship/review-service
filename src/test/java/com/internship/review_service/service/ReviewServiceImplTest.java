@@ -66,6 +66,8 @@ class ReviewServiceImplTest {
     private JobDTO jobDTO;
 
     private EditRequest editRequest;
+    
+    private static final long USER_ID = 1L;
 
     @BeforeEach
     void beforeEach() {
@@ -80,7 +82,6 @@ class ReviewServiceImplTest {
                 .build();
 
         request = ReviewRequest.builder()
-                .userId(1L)
                 .reviewedId(1L)
                 .reviewType(ReviewType.JOB)
                 .rating(10)
@@ -116,7 +117,6 @@ class ReviewServiceImplTest {
 
         editRequest = EditRequest.builder()
                 .id(1L)
-                .userId(1L)
                 .text("Text edit")
                 .rating(1)
                 .build();
@@ -125,27 +125,27 @@ class ReviewServiceImplTest {
     @Test
     void addReview_shouldReturnTrue_whenReviewIsAddedToDb() {
 
-        when(userService.getUser(request.getUserId())).thenReturn(userDTO);
+        when(userService.getUser(USER_ID)).thenReturn(userDTO);
         when(jobService.getJobById(request.getReviewedId())).thenReturn(jobDTO);
         when(reviewMapper.toEntity(request)).thenReturn(review);
         when(reviewRepository.save(review)).thenReturn(review);
         doNothing().when(reviewMessageProducer).sendAddedReviewMessage(anyString(), anyLong());
 
-        boolean result = reviewService.addReview(request);
+        boolean result = reviewService.addReview(request, USER_ID);
 
         assertTrue(result);
         verify(reviewRepository).save(review);
-        verify(reviewMessageProducer).sendAddedReviewMessage(userDTO.getEmail(), request.getUserId());
+        verify(reviewMessageProducer).sendAddedReviewMessage(userDTO.getEmail(), USER_ID);
     }
 
     @Test
     void addReview_shouldThrowException_whenUserNotFound() {
 
-        when(userService.getUser(request.getUserId())).thenThrow(FeignException.NotFound.class);
+        when(userService.getUser(USER_ID)).thenThrow(FeignException.NotFound.class);
 
-        NotFoundException ex = assertThrows(NotFoundException.class, () -> reviewService.addReview(request));
+        NotFoundException ex = assertThrows(NotFoundException.class, () -> reviewService.addReview(request, USER_ID));
 
-        assertEquals("User with this id not found! id: " + request.getUserId(), ex.getMessage());
+        assertEquals("User with this id not found! id: " + USER_ID, ex.getMessage());
     }
 
     @Test
@@ -156,7 +156,7 @@ class ReviewServiceImplTest {
 
         ConflictException ex = assertThrows(
                 ConflictException.class,
-                () -> reviewService.addReview(request)
+                () -> reviewService.addReview(request, USER_ID)
         );
 
         assertEquals("User cannot review themselves.", ex.getMessage());
@@ -165,10 +165,10 @@ class ReviewServiceImplTest {
     @Test
     void addReview_shouldThrowException_whenJobNotFound() {
 
-        when(userService.getUser(request.getUserId())).thenReturn(userDTO);
+        when(userService.getUser(USER_ID)).thenReturn(userDTO);
         when(jobService.getJobById(request.getReviewedId())).thenThrow(FeignException.NotFound.class);
 
-        NotFoundException ex = assertThrows(NotFoundException.class, () -> reviewService.addReview(request));
+        NotFoundException ex = assertThrows(NotFoundException.class, () -> reviewService.addReview(request, USER_ID));
 
         assertEquals("Job with this id not found! id: " + request.getReviewedId(), ex.getMessage());
     }
@@ -178,15 +178,15 @@ class ReviewServiceImplTest {
 
         jobDTO.setUserId(1L);
 
-        when(userService.getUser(request.getUserId())).thenReturn(userDTO);
+        when(userService.getUser(USER_ID)).thenReturn(userDTO);
         when(jobService.getJobById(request.getReviewedId())).thenReturn(jobDTO);
 
         ConflictException ex = assertThrows(
                 ConflictException.class,
-                () -> reviewService.addReview(request)
+                () -> reviewService.addReview(request, USER_ID)
         );
 
-        assertEquals("User cannot review their own job! id: " + request.getUserId(), ex.getMessage());
+        assertEquals("User cannot review their own job! id: " + USER_ID, ex.getMessage());
     }
 
     @Test
@@ -195,12 +195,12 @@ class ReviewServiceImplTest {
         request.setReviewedId(2L);
         request.setReviewType(ReviewType.USER);
 
-        when(userService.getUser(request.getUserId())).thenReturn(userDTO);
+        when(userService.getUser(USER_ID)).thenReturn(userDTO);
         when(userService.getUser(request.getReviewedId())).thenThrow(FeignException.NotFound.class);
 
-        NotFoundException ex = assertThrows(NotFoundException.class, () -> reviewService.addReview(request));
+        NotFoundException ex = assertThrows(NotFoundException.class, () -> reviewService.addReview(request, USER_ID));
 
-        assertEquals("User with this id not found! id: " + request.getUserId(), ex.getMessage());
+        assertEquals("User with this id not found! id: " + USER_ID, ex.getMessage());
     }
 
     @Test
@@ -286,7 +286,7 @@ class ReviewServiceImplTest {
         when(reviewRepository.findById(anyLong())).thenReturn(Optional.of(review));
         when(reviewMapper.toDto(review)).thenReturn(response);
 
-        ReviewResponse result = reviewService.editReview(editRequest);
+        ReviewResponse result = reviewService.editReview(editRequest, USER_ID);
 
         assertNotNull(result);
         assertEquals(editRequest.getText(), result.getText());
@@ -300,7 +300,7 @@ class ReviewServiceImplTest {
 
         NotFoundException ex = assertThrows(
                 NotFoundException.class,
-                () -> reviewService.editReview(editRequest)
+                () -> reviewService.editReview(editRequest, USER_ID)
         );
 
         assertEquals("Review with this id not found! id: 1", ex.getMessage());
@@ -308,14 +308,13 @@ class ReviewServiceImplTest {
 
     @Test
     void editReview_shouldThrowException_whenUserCannotEditAnotherUserReview() {
-
-        editRequest.setUserId(10L);
+        long someOtherUserId = 10L;
 
         when(reviewRepository.findById(anyLong())).thenReturn(Optional.of(review));
 
         ConflictException ex = assertThrows(
                 ConflictException.class,
-                () -> reviewService.editReview(editRequest)
+                () -> reviewService.editReview(editRequest, someOtherUserId)
         );
 
         assertEquals("User cannot edit another user's review!", ex.getMessage());

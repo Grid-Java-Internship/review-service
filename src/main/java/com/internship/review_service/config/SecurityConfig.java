@@ -13,7 +13,6 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
     private final SecurityConfiguration securityConfiguration;
     private final PathPermissionConstants pathPermissionConstants;
 
@@ -21,14 +20,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http
     ) throws Exception {
-
-
         return securityConfiguration.securityFilterChain(http,
                 pathPermissionConstants.getPermittedRequestsForAllUsers(),
                 pathPermissionConstants.getPermittedRequestForSuperAdmin(),
                 pathPermissionConstants.getPermittedRequestsForAdminOrSuperAdmin(),
                 pathPermissionConstants.getPermittedRequestsForUsersOrAdminOrSuperAdmin());
     }
-
-
 }

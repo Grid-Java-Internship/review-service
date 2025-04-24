@@ -46,7 +46,7 @@ security:
       - method: GET
         pattern: /v1/review/{id}
       - method: GET
-        pattern: /v1/review/entity/{id}
+        pattern: /v1/review/{type}/{id}
       - method: GET
         pattern: /v1/review/rating/{type}/{id}
 
