@@ -8,7 +8,8 @@ public enum Status implements ReviewEnum {
     IN_REVIEW(1),
     ACCEPTED(2),
     REJECTED(3),
-    DELETED(4);
+    DELETED(4),
+    DISABLED(5);
 
     private final Integer id;
 
