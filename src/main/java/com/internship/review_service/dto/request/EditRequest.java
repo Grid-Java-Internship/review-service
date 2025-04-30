@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 public class EditRequest {
 
     private Long id;
-    private Long userId;
     private String text;
     private Integer rating;
 }

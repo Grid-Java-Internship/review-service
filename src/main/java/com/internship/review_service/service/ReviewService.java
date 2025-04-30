@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface ReviewService {
 
-    Boolean addReview(ReviewRequest reviewRequest);
+    Boolean addReview(ReviewRequest reviewRequest, Long userId);
 
     Boolean deleteReview(Long userId, Long reviewId);
 
@@ -18,7 +18,7 @@ public interface ReviewService {
 
     List<ReviewResponse> getAllReviews(ReviewType type, Long reviewedId, int page);
 
-    ReviewResponse editReview(EditRequest editRequest);
+    ReviewResponse editReview(EditRequest editRequest, Long userId);
 
     EntityRatingResponse getEntityRating(Long reviewedId, ReviewType reviewType);
 

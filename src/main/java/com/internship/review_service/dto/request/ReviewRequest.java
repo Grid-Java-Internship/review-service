@@ -12,10 +12,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewRequest {
-
-    @NotNull(message = "User ID cannot be null.")
-    private Long userId;
-
     @NotNull(message = "Reviewed ID cannot be null.")
     private Long reviewedId;
 

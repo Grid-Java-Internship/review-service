@@ -48,18 +48,15 @@ security:
       - method: GET
         pattern: /v1/review/{id}
       - method: GET
-        pattern: /v1/review/entity/{id}
+        pattern: /v1/review/{type}/{id}
       - method: GET
         pattern: /v1/review/rating/{type}/{id}
-
     permittedRequestsForUsersOrAdminOrSuperAdmin:
       - method: POST
         pattern: /v1/review
       - method: DELETE
         pattern: /v1/review/{id}
-
-    permittedRequestsForAdminOrSuperAdmin:
       - method: PUT
         pattern: /v1/review/edit
-
+    permittedRequestsForAdminOrSuperAdmin: [ ]
     permittedRequestForSuperAdmin: [ ]

@@ -7,9 +7,11 @@ import com.internship.review_service.dto.response.ReviewResponse;
 import com.internship.review_service.dto.response.SimpleMessageResponse;
 import com.internship.review_service.enums.ReviewType;
 import com.internship.review_service.service.ReviewService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,8 +30,9 @@ public class ReviewController {
 
     @PostMapping
     public ResponseEntity<SimpleMessageResponse> addReview(
-            @RequestBody ReviewRequest request) {
-        boolean result = reviewService.addReview(request);
+            @Valid @RequestBody ReviewRequest request,
+            @AuthenticationPrincipal String userId) {
+        boolean result = reviewService.addReview(request, Long.parseLong(userId));
 
         String message = result ? REVIEW_SUCCESS : REVIEW_FAILED;
         HttpStatus status = result ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST;
@@ -46,9 +49,9 @@ public class ReviewController {
     @DeleteMapping("/{id}")
     public ResponseEntity<SimpleMessageResponse> deleteReview(
             @PathVariable("id") Long id,
-            @RequestParam("userId") Long userId
+            @AuthenticationPrincipal String userId
     ) {
-        boolean result = reviewService.deleteReview(userId, id);
+        boolean result = reviewService.deleteReview(Long.parseLong(userId), id);
 
         String message = result ? DELETE_SUCCESS : DELETE_FAILED;
         HttpStatus status = result ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST;
@@ -83,9 +86,12 @@ public class ReviewController {
 
     @PutMapping("/edit")
     public ResponseEntity<ReviewResponse> editReview(
-            @RequestBody EditRequest request
+            @Valid@RequestBody EditRequest request,
+            @AuthenticationPrincipal String userId
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(reviewService.editReview(request));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(reviewService.editReview(request, Long.parseLong(userId)));
     }
 
     @GetMapping("/rating/{type}/{id}")
