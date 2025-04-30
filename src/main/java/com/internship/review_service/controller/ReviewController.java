@@ -86,7 +86,7 @@ public class ReviewController {
 
     @PutMapping("/edit")
     public ResponseEntity<ReviewResponse> editReview(
-            @Valid@RequestBody EditRequest request,
+            @Valid @RequestBody EditRequest request,
             @AuthenticationPrincipal String userId
     ) {
         return ResponseEntity
