@@ -38,4 +38,5 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             @NotNull(message = "Review type cannot be null.") ReviewType reviewType,
             Pageable pageable);
 
+    Page<Review> findByUserIdAndStatus(Long id, Status status, Pageable pageable);
 }

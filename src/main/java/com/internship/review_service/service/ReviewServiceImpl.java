@@ -217,6 +217,20 @@ public class ReviewServiceImpl implements ReviewService {
         return response;
     }
 
+    @Override
+    public List<ReviewResponse> getUserLeftReviews(Long id, int page) {
+        Pageable pageable = PageRequest.of(page, 10);
+
+        List<Review> reviews = reviewRepository.findByUserIdAndStatus(
+                id,
+                Status.ACCEPTED,
+                pageable
+        ).getContent();
+
+        return reviews.stream().map(reviewMapper::toDto).toList();
+
+    }
+
     /**
      * Checks if a user with the given id exists in the user service,
      * and if the given job id exists in the job service.

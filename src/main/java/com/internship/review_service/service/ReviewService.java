@@ -22,4 +22,5 @@ public interface ReviewService {
 
     EntityRatingResponse getEntityRating(Long reviewedId, ReviewType reviewType);
 
+    List<ReviewResponse> getUserLeftReviews(Long id, int page);
 }

@@ -95,4 +95,10 @@ public class ReviewController {
     ) {
         return ResponseEntity.status(HttpStatus.OK).body(reviewService.getEntityRating(id, type));
     }
+
+    @GetMapping("/leftReviews/{id}")
+    public ResponseEntity<List<ReviewResponse>> getUserLeftReviews(@PathVariable("id") Long id,
+                                                                   @RequestParam(value = "page", defaultValue = "0") int page) {
+        return ResponseEntity.status(HttpStatus.OK).body(reviewService.getUserLeftReviews(id,page));
+    }
 }

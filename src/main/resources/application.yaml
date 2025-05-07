@@ -49,6 +49,8 @@ security:
         pattern: /v1/review/entity/{id}
       - method: GET
         pattern: /v1/review/rating/{type}/{id}
+      - method: GET
+        pattern: /v1/review/leftReviews/{id}/**
 
     permittedRequestsForUsersOrAdminOrSuperAdmin:
       - method: POST
