@@ -3,8 +3,6 @@ spring:
     active: default
   application:
     name: ${SPRING_APP_NAME:review-service}
-  config:
-    import: "classpath:secrets.yaml"
   datasource:
     url: jdbc:${DB_TYPE:postgresql}://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:review_service}
     username: ${DB_USER:pgAdmin}
@@ -54,13 +52,13 @@ microservicesUrls:
   job-service: "http://job-service:8082"
 
 security:
-  api-key: "DEFAULT-REVIEW-SERVICE-KEY"
+  api-key: "${BASE_API_KEY}"
   feign:
     user-service:
-      api-key: "DEFAULT-USER-SERVICE-KEY"
+      api-key: "${USER_API_KEY}"
       enabled: true
     job-service:
-      api-key: "DEFAULT-JOB-SERVICE-KEY"
+      api-key: "${JOB_API_KEY}"
       enabled: true
   paths:
     permittedRequestsForAllUsers:
