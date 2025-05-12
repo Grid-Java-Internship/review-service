@@ -261,68 +261,34 @@ public class ReviewServiceImpl implements ReviewService {
                 break;
         }
 
+        try {
+            List<GetReservationResponse> reservations = reservationService
+                    .getReservationsByCustomerId(userId, 0, 10)
+                    .getBody();
 
-        switch(type){
-            case USER: {
-                try {
-                    List<GetReservationResponse> reservations = reservationService.getReservationsByCustomerId(userId, 0, 10).getBody();
-                    reservations = reservations
-                            .stream()
-                            .filter(reservation ->
-                                    reservation.getWorkerId().equals(reviewedId)).toList();
-
-                    boolean hasFinished = false;
-
-                    if(reservations.isEmpty())
-                        throw new NotFoundException("You must have a finished job with the reviewed first!");
-                    else{
-                        for (GetReservationResponse reservation : reservations) {
-                            if (ReservationStatus.FINISHED == reservation.getStatus()) {
-                                hasFinished = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if(!hasFinished)
-                        throw new NotFoundException("You must have a finished job with the reviewed first!");
-
-                    break;
-                } catch (FeignException.NotFound e) {
-                    log.error("You must have a job with this user first! id: {} ",userId);
-                    throw new NotFoundException("You must have a job with this user first! id: " + userId);
-                }
+            if (reservations == null || reservations.isEmpty()) {
+                throw new NotFoundException("You must have a job with this user first! id: " + userId);
             }
-            case JOB: {
-                try {
-                    List<GetReservationResponse> reservations = reservationService.getReservationsByCustomerId(userId, 0, 10).getBody();
-                    reservations = reservations
-                            .stream()
-                            .filter(reservation ->
-                                    reservation.getJobId().equals(reviewedId)).toList();
 
-                    boolean hasFinished = false;
+            reservations = switch (type) {
+                case USER -> reservations.stream()
+                        .filter(r -> r.getWorkerId().equals(reviewedId))
+                        .toList();
+                case JOB -> reservations.stream()
+                        .filter(r -> r.getJobId().equals(reviewedId))
+                        .toList();
+            };
 
-                    if(reservations.isEmpty())
-                        throw new NotFoundException("You must have a finished job with the reviewed first!");
-                    else{
-                        for (GetReservationResponse reservation : reservations) {
-                            if (ReservationStatus.FINISHED == reservation.getStatus()) {
-                                hasFinished = true;
-                                break;
-                            }
-                        }
-                    }
+            boolean hasFinished = reservations.stream()
+                    .anyMatch(r -> ReservationStatus.FINISHED == r.getStatus());
 
-                    if(!hasFinished)
-                        throw new NotFoundException("You must have a finished job with the reviewed first!");
-
-                    break;
-                } catch (FeignException.NotFound e) {
-                    log.error("You must have a job with this user first! id: {} ",userId);
-                    throw new NotFoundException("You must have a job with this user first! id: " + userId);
-                }
+            if (reservations.isEmpty() || !hasFinished) {
+                throw new NotFoundException("You must have a finished job with the reviewed first!");
             }
+
+        } catch (FeignException.NotFound e) {
+            log.error("You must have a job with this user first! id: {}", userId);
+            throw new NotFoundException("You must have a job with this user first! id: " + userId);
         }
     }
 }
