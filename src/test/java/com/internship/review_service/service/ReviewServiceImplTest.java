@@ -24,6 +24,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
@@ -354,5 +355,68 @@ class ReviewServiceImplTest {
         assertEquals(ReviewType.JOB, result.getReviewType());
         assertEquals(0, result.getRating());
         assertEquals(0, result.getReviewCount());
+    }
+
+    @Test
+    void getUserLeftReviews_shouldReturnReviews_whenUserHasLeftReviews() {
+        // Arrange
+        Long userId = 1L;
+        int page = 0;
+        Pageable pageable = PageRequest.of(page, 10);
+        List<Review> reviews = List.of(review);
+        PageImpl<Review> reviewPage = new PageImpl<>(reviews, pageable, reviews.size());
+
+        when(reviewRepository.findByUserIdAndStatus(userId, Status.ACCEPTED, pageable))
+                .thenReturn(reviewPage);
+        when(reviewMapper.toDto(review)).thenReturn(response);
+
+        // Act
+        List<ReviewResponse> result = reviewService.getUserLeftReviews(userId, page);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(response, result.get(0));
+        verify(reviewRepository).findByUserIdAndStatus(userId, Status.ACCEPTED, pageable);
+        verify(reviewMapper).toDto(review);
+    }
+
+    @Test
+    void getUserLeftReviews_shouldReturnEmptyList_whenUserHasNoReviews() {
+        // Arrange
+        Long userId = 1L;
+        int page = 0;
+        Pageable pageable = PageRequest.of(page, 10);
+
+        when(reviewRepository.findByUserIdAndStatus(userId, Status.ACCEPTED, pageable))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+        // Act
+        List<ReviewResponse> result = reviewService.getUserLeftReviews(userId, page);
+
+        // Assert
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(reviewRepository).findByUserIdAndStatus(userId, Status.ACCEPTED, pageable);
+        verify(reviewMapper, never()).toDto(any());
+    }
+
+    @Test
+    void getUserLeftReviews_shouldUseCorrectPagination() {
+        // Arrange
+        Long userId = 1L;
+        int page = 2;
+        int size = 10;
+        Pageable pageable = PageRequest.of(page, size);
+
+        when(reviewRepository.findByUserIdAndStatus(userId, Status.ACCEPTED, pageable))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+        // Act
+        List<ReviewResponse> result = reviewService.getUserLeftReviews(userId, page);
+
+        // Assert
+        assertNotNull(result);
+        verify(reviewRepository).findByUserIdAndStatus(userId, Status.ACCEPTED, pageable);
     }
 }
