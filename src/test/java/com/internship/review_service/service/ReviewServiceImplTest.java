@@ -3,6 +3,9 @@ package com.internship.review_service.service;
 import com.internship.review_service.dto.request.EditRequest;
 import com.internship.review_service.dto.response.EntityRatingResponse;
 import com.internship.review_service.feign.job.JobDTO;
+import com.internship.review_service.feign.reservation.GetReservationResponse;
+import com.internship.review_service.feign.reservation.ReservationService;
+import com.internship.review_service.feign.reservation.ReservationStatus;
 import com.internship.review_service.feign.user.UserDTO;
 import com.internship.review_service.dto.request.ReviewRequest;
 import com.internship.review_service.dto.response.ReviewResponse;
@@ -26,7 +29,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -53,10 +58,17 @@ class ReviewServiceImplTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private ReservationService reservationService;
+
     @InjectMocks
     private ReviewServiceImpl reviewService;
 
     private ReviewRequest request;
+
+    private ReviewRequest request2;
+
+    private ReviewRequest request3;
 
     private ReviewResponse response;
 
@@ -64,11 +76,17 @@ class ReviewServiceImplTest {
 
     private UserDTO userDTO;
 
+    private UserDTO userDTO2;
+
     private JobDTO jobDTO;
+
+    private JobDTO jobDTO2;
 
     private EditRequest editRequest;
     
     private static final long USER_ID = 1L;
+
+    private List<GetReservationResponse> reservations = new ArrayList<>();
 
     @BeforeEach
     void beforeEach() {
@@ -85,6 +103,22 @@ class ReviewServiceImplTest {
         request = ReviewRequest.builder()
                 .reviewedId(1L)
                 .reviewType(ReviewType.JOB)
+                .rating(10)
+                .text("Text")
+                .build();
+
+        request2 = ReviewRequest.builder()
+                .userId(2L)
+                .reviewedId(2L)
+                .reviewType(ReviewType.JOB)
+                .rating(10)
+                .text("Text")
+                .build();
+
+        request3 = ReviewRequest.builder()
+                .userId(2L)
+                .reviewedId(1L)
+                .reviewType(ReviewType.USER)
                 .rating(10)
                 .text("Text")
                 .build();
@@ -106,9 +140,26 @@ class ReviewServiceImplTest {
                 .surname("surname")
                 .build();
 
+        userDTO2 = UserDTO.builder()
+                .id(2L)
+                .email("email3@email.com")
+                .name("name")
+                .surname("surname")
+                .build();
+
         jobDTO = JobDTO.builder()
                 .id(1L)
                 .userId(2L)
+                .title("title")
+                .description("description")
+                .dateOfPosting(java.time.LocalDate.now())
+                .experience(1)
+                .hourlyRate(1)
+                .build();
+
+        jobDTO2 = JobDTO.builder()
+                .id(2L)
+                .userId(1L)
                 .title("title")
                 .description("description")
                 .dateOfPosting(java.time.LocalDate.now())
@@ -121,6 +172,21 @@ class ReviewServiceImplTest {
                 .text("Text edit")
                 .rating(1)
                 .build();
+
+        reservations.add(GetReservationResponse
+                .builder()
+                        .jobId(1L)
+                        .customerId(1L)
+                        .workerId(2L)
+                        .status(ReservationStatus.FINISHED)
+                .build());
+        reservations.add(GetReservationResponse
+                .builder()
+                .jobId(1L)
+                .customerId(1L)
+                .workerId(2L)
+                .status(ReservationStatus.PENDING_CUSTOMER_APPROVAL)
+                .build());
     }
 
     @Test
@@ -130,6 +196,15 @@ class ReviewServiceImplTest {
         when(jobService.getJobById(request.getReviewedId())).thenReturn(jobDTO);
         when(reviewMapper.toEntity(request)).thenReturn(review);
         when(reviewRepository.save(review)).thenReturn(review);
+
+        ResponseEntity<List<GetReservationResponse>> responseEntity =
+                ResponseEntity
+                .ok()
+                .body(reservations);
+
+        when(reservationService
+                .getReservationsByCustomerId(request.getUserId(),0,10))
+                .thenReturn(responseEntity);
         doNothing().when(reviewMessageProducer).sendAddedReviewMessage(anyString(), anyLong());
 
         boolean result = reviewService.addReview(request, USER_ID);
@@ -137,6 +212,39 @@ class ReviewServiceImplTest {
         assertTrue(result);
         verify(reviewRepository).save(review);
         verify(reviewMessageProducer).sendAddedReviewMessage(userDTO.getEmail(), USER_ID);
+    }
+
+    @Test
+    void addReview_shouldThrowException_whenReservationIsNotFinishedJobType() {
+        when(userService.getUser(request2.getUserId())).thenReturn(userDTO2);
+        when(jobService.getJobById(request2.getReviewedId())).thenReturn(jobDTO2);
+
+        ResponseEntity<List<GetReservationResponse>> responseEntity =
+                ResponseEntity
+                        .ok()
+                        .body(reservations);
+
+        when(reservationService
+                .getReservationsByCustomerId(request2.getUserId(),0,10))
+                .thenReturn(responseEntity);
+
+        assertThrows(NotFoundException.class, () -> reviewService.addReview(request2));
+    }
+
+    @Test
+    void addReview_shouldThrowException_whenReservationIsNotFinishedUserType() {
+        when(userService.getUser(request3.getUserId())).thenReturn(userDTO2);
+
+        ResponseEntity<List<GetReservationResponse>> responseEntity =
+                ResponseEntity
+                        .ok()
+                        .body(reservations);
+
+        when(reservationService
+                .getReservationsByCustomerId(request3.getUserId(),0,10))
+                .thenReturn(responseEntity);
+
+        assertThrows(NotFoundException.class, () -> reviewService.addReview(request3));
     }
 
     @Test

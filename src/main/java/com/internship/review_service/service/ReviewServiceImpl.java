@@ -4,6 +4,9 @@ package com.internship.review_service.service;
 import com.internship.review_service.dto.request.EditRequest;
 import com.internship.review_service.dto.response.EntityRatingResponse;
 import com.internship.review_service.feign.job.JobDTO;
+import com.internship.review_service.feign.reservation.GetReservationResponse;
+import com.internship.review_service.feign.reservation.ReservationService;
+import com.internship.review_service.feign.reservation.ReservationStatus;
 import com.internship.review_service.feign.user.UserDTO;
 import com.internship.review_service.dto.request.ReviewRequest;
 import com.internship.review_service.dto.response.ReviewResponse;
@@ -29,6 +32,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
+import static com.internship.review_service.enums.ReviewType.JOB;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -43,6 +48,8 @@ public class ReviewServiceImpl implements ReviewService {
     private final JobService jobService;
 
     private final UserService userService;
+
+    private final ReservationService reservationService;
 
     /**
      * Adds a review based on the given ReviewRequest. Validates the request to ensure
@@ -267,6 +274,36 @@ public class ReviewServiceImpl implements ReviewService {
                     throw new ConflictException("User cannot review their own job! id: " + userId);
                 }
                 break;
+        }
+
+        try {
+            List<GetReservationResponse> reservations = reservationService
+                    .getReservationsByCustomerId(userId, 0, 10)
+                    .getBody();
+
+            if (reservations == null || reservations.isEmpty()) {
+                throw new NotFoundException("You must have a job with this user first! id: " + userId);
+            }
+
+            reservations = switch (type) {
+                case USER -> reservations.stream()
+                        .filter(r -> r.getWorkerId().equals(reviewedId))
+                        .toList();
+                case JOB -> reservations.stream()
+                        .filter(r -> r.getJobId().equals(reviewedId))
+                        .toList();
+            };
+
+            boolean hasFinished = reservations.stream()
+                    .anyMatch(r -> ReservationStatus.FINISHED == r.getStatus());
+
+            if (reservations.isEmpty() || !hasFinished) {
+                throw new NotFoundException("You must have a finished job with the reviewed first!");
+            }
+
+        } catch (FeignException.NotFound e) {
+            log.error("You must have a job with this user first! id: {}", userId);
+            throw new NotFoundException("You must have a job with this user first! id: " + userId);
         }
     }
 }
