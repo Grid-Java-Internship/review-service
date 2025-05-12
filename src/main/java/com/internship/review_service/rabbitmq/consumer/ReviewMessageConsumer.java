@@ -9,6 +9,7 @@ import com.internship.review_service.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,7 +46,7 @@ public class ReviewMessageConsumer {
         log.info("Attempting to enable reviews for job with id: {}", message.getId());
 
         List<Review> reviews = reviewRepository.findByReviewedIdAndReviewTypeAndStatus(message.getId(), ReviewType.JOB, Status.DISABLED);
-        if(reviews.isEmpty()){
+        if (reviews.isEmpty()){
             throw new NotFoundException("Reviews with id: " + message.getId() + " not found or already enabled");
         }
         for (Review review : reviews) {
@@ -53,6 +54,23 @@ public class ReviewMessageConsumer {
         }
 
         log.info("Reviews for job with id: {} enabled successfully", message.getId());
+    }
+
+    @Transactional
+    @RabbitListener(queues = "${spring.rabbitmq.queues.deleteReviews}")
+    public void deleteReviews(Message message) {
+        log.info("Attempting to delete reviews for job with id: {}", message.getId());
+
+        List<Review> reviews = reviewRepository.findReviewsByReviewedIdAndReviewType(message.getId(), ReviewType.JOB);
+        if (reviews.isEmpty()) {
+            throw new NotFoundException("No reviews associated with job: " + message.getId());
+        }
+        for (Review review : reviews) {
+            review.setStatus(Status.DELETED);
+            reviewRepository.save(review);
+        }
+
+        log.info("Reviews for job with id: {} deleted.", message.getId());
     }
 }
 
