@@ -64,7 +64,7 @@ class ReviewServiceImplTest {
     @InjectMocks
     private ReviewServiceImpl reviewService;
 
-    private ReviewRequest request;
+    private ReviewRequest request1;
 
     private ReviewRequest request2;
 
@@ -84,9 +84,11 @@ class ReviewServiceImplTest {
 
     private EditRequest editRequest;
     
-    private static final long USER_ID = 1L;
+    private static final long USER_ID1 = 1L;
+    private static final long USER_ID2 = 2L;
+    private static final long USER_ID3 = 3L;
 
-    private List<GetReservationResponse> reservations = new ArrayList<>();
+    private final List<GetReservationResponse> reservations = new ArrayList<>();
 
     @BeforeEach
     void beforeEach() {
@@ -100,7 +102,7 @@ class ReviewServiceImplTest {
                 .text("Text")
                 .build();
 
-        request = ReviewRequest.builder()
+        request1 = ReviewRequest.builder()
                 .reviewedId(1L)
                 .reviewType(ReviewType.JOB)
                 .rating(10)
@@ -108,7 +110,6 @@ class ReviewServiceImplTest {
                 .build();
 
         request2 = ReviewRequest.builder()
-                .userId(2L)
                 .reviewedId(2L)
                 .reviewType(ReviewType.JOB)
                 .rating(10)
@@ -116,7 +117,6 @@ class ReviewServiceImplTest {
                 .build();
 
         request3 = ReviewRequest.builder()
-                .userId(2L)
                 .reviewedId(1L)
                 .reviewType(ReviewType.USER)
                 .rating(10)
@@ -192,9 +192,9 @@ class ReviewServiceImplTest {
     @Test
     void addReview_shouldReturnTrue_whenReviewIsAddedToDb() {
 
-        when(userService.getUser(USER_ID)).thenReturn(userDTO);
-        when(jobService.getJobById(request.getReviewedId())).thenReturn(jobDTO);
-        when(reviewMapper.toEntity(request)).thenReturn(review);
+        when(userService.getUser(USER_ID1)).thenReturn(userDTO);
+        when(jobService.getJobById(request1.getReviewedId())).thenReturn(jobDTO);
+        when(reviewMapper.toEntity(request1)).thenReturn(review);
         when(reviewRepository.save(review)).thenReturn(review);
 
         ResponseEntity<List<GetReservationResponse>> responseEntity =
@@ -203,20 +203,20 @@ class ReviewServiceImplTest {
                 .body(reservations);
 
         when(reservationService
-                .getReservationsByCustomerId(request.getUserId(),0,10))
+                .getReservationsByCustomerId(USER_ID1,0,10))
                 .thenReturn(responseEntity);
         doNothing().when(reviewMessageProducer).sendAddedReviewMessage(anyString(), anyLong());
 
-        boolean result = reviewService.addReview(request, USER_ID);
+        boolean result = reviewService.addReview(request1, USER_ID1);
 
         assertTrue(result);
         verify(reviewRepository).save(review);
-        verify(reviewMessageProducer).sendAddedReviewMessage(userDTO.getEmail(), USER_ID);
+        verify(reviewMessageProducer).sendAddedReviewMessage(userDTO.getEmail(), USER_ID1);
     }
 
     @Test
     void addReview_shouldThrowException_whenReservationIsNotFinishedJobType() {
-        when(userService.getUser(request2.getUserId())).thenReturn(userDTO2);
+        when(userService.getUser(USER_ID2)).thenReturn(userDTO2);
         when(jobService.getJobById(request2.getReviewedId())).thenReturn(jobDTO2);
 
         ResponseEntity<List<GetReservationResponse>> responseEntity =
@@ -225,15 +225,15 @@ class ReviewServiceImplTest {
                         .body(reservations);
 
         when(reservationService
-                .getReservationsByCustomerId(request2.getUserId(),0,10))
+                .getReservationsByCustomerId(USER_ID2,0,10))
                 .thenReturn(responseEntity);
 
-        assertThrows(NotFoundException.class, () -> reviewService.addReview(request2));
+        assertThrows(NotFoundException.class, () -> reviewService.addReview(request2, USER_ID2));
     }
 
     @Test
     void addReview_shouldThrowException_whenReservationIsNotFinishedUserType() {
-        when(userService.getUser(request3.getUserId())).thenReturn(userDTO2);
+        when(userService.getUser(USER_ID3)).thenReturn(userDTO2);
 
         ResponseEntity<List<GetReservationResponse>> responseEntity =
                 ResponseEntity
@@ -241,31 +241,31 @@ class ReviewServiceImplTest {
                         .body(reservations);
 
         when(reservationService
-                .getReservationsByCustomerId(request3.getUserId(),0,10))
+                .getReservationsByCustomerId(USER_ID3,0,10))
                 .thenReturn(responseEntity);
 
-        assertThrows(NotFoundException.class, () -> reviewService.addReview(request3));
+        assertThrows(NotFoundException.class, () -> reviewService.addReview(request3, USER_ID3));
     }
 
     @Test
     void addReview_shouldThrowException_whenUserNotFound() {
 
-        when(userService.getUser(USER_ID)).thenThrow(FeignException.NotFound.class);
+        when(userService.getUser(USER_ID1)).thenThrow(FeignException.NotFound.class);
 
-        NotFoundException ex = assertThrows(NotFoundException.class, () -> reviewService.addReview(request, USER_ID));
+        NotFoundException ex = assertThrows(NotFoundException.class, () -> reviewService.addReview(request1, USER_ID1));
 
-        assertEquals("User with this id not found! id: " + USER_ID, ex.getMessage());
+        assertEquals("User with this id not found! id: " + USER_ID1, ex.getMessage());
     }
 
     @Test
     void addReview_shouldThrowException_whenUserCannotReviewThemselves() {
 
-        request.setReviewedId(1L);
-        request.setReviewType(ReviewType.USER);
+        request1.setReviewedId(1L);
+        request1.setReviewType(ReviewType.USER);
 
         ConflictException ex = assertThrows(
                 ConflictException.class,
-                () -> reviewService.addReview(request, USER_ID)
+                () -> reviewService.addReview(request1, USER_ID1)
         );
 
         assertEquals("User cannot review themselves.", ex.getMessage());
@@ -274,12 +274,12 @@ class ReviewServiceImplTest {
     @Test
     void addReview_shouldThrowException_whenJobNotFound() {
 
-        when(userService.getUser(USER_ID)).thenReturn(userDTO);
-        when(jobService.getJobById(request.getReviewedId())).thenThrow(FeignException.NotFound.class);
+        when(userService.getUser(USER_ID1)).thenReturn(userDTO);
+        when(jobService.getJobById(request1.getReviewedId())).thenThrow(FeignException.NotFound.class);
 
-        NotFoundException ex = assertThrows(NotFoundException.class, () -> reviewService.addReview(request, USER_ID));
+        NotFoundException ex = assertThrows(NotFoundException.class, () -> reviewService.addReview(request1, USER_ID1));
 
-        assertEquals("Job with this id not found! id: " + request.getReviewedId(), ex.getMessage());
+        assertEquals("Job with this id not found! id: " + request1.getReviewedId(), ex.getMessage());
     }
 
     @Test
@@ -287,29 +287,29 @@ class ReviewServiceImplTest {
 
         jobDTO.setUserId(1L);
 
-        when(userService.getUser(USER_ID)).thenReturn(userDTO);
-        when(jobService.getJobById(request.getReviewedId())).thenReturn(jobDTO);
+        when(userService.getUser(USER_ID1)).thenReturn(userDTO);
+        when(jobService.getJobById(request1.getReviewedId())).thenReturn(jobDTO);
 
         ConflictException ex = assertThrows(
                 ConflictException.class,
-                () -> reviewService.addReview(request, USER_ID)
+                () -> reviewService.addReview(request1, USER_ID1)
         );
 
-        assertEquals("User cannot review their own job! id: " + USER_ID, ex.getMessage());
+        assertEquals("User cannot review their own job! id: " + USER_ID1, ex.getMessage());
     }
 
     @Test
     void addReview_shouldThrowException_whenReviewedUserDoesntExist() {
 
-        request.setReviewedId(2L);
-        request.setReviewType(ReviewType.USER);
+        request1.setReviewedId(2L);
+        request1.setReviewType(ReviewType.USER);
 
-        when(userService.getUser(USER_ID)).thenReturn(userDTO);
-        when(userService.getUser(request.getReviewedId())).thenThrow(FeignException.NotFound.class);
+        when(userService.getUser(USER_ID1)).thenReturn(userDTO);
+        when(userService.getUser(request1.getReviewedId())).thenThrow(FeignException.NotFound.class);
 
-        NotFoundException ex = assertThrows(NotFoundException.class, () -> reviewService.addReview(request, USER_ID));
+        NotFoundException ex = assertThrows(NotFoundException.class, () -> reviewService.addReview(request1, USER_ID1));
 
-        assertEquals("User with this id not found! id: " + USER_ID, ex.getMessage());
+        assertEquals("User with this id not found! id: " + USER_ID2, ex.getMessage());
     }
 
     @Test
@@ -395,7 +395,7 @@ class ReviewServiceImplTest {
         when(reviewRepository.findById(anyLong())).thenReturn(Optional.of(review));
         when(reviewMapper.toDto(review)).thenReturn(response);
 
-        ReviewResponse result = reviewService.editReview(editRequest, USER_ID);
+        ReviewResponse result = reviewService.editReview(editRequest, USER_ID1);
 
         assertNotNull(result);
         assertEquals(editRequest.getText(), result.getText());
@@ -409,7 +409,7 @@ class ReviewServiceImplTest {
 
         NotFoundException ex = assertThrows(
                 NotFoundException.class,
-                () -> reviewService.editReview(editRequest, USER_ID)
+                () -> reviewService.editReview(editRequest, USER_ID1)
         );
 
         assertEquals("Review with this id not found! id: 1", ex.getMessage());
