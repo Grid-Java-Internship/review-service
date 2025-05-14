@@ -210,4 +210,6 @@ dist/
 dist-ssr/
 *.local
 .firebase/
+env.properties
+.env
 gradle.properties
