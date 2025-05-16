@@ -63,6 +63,9 @@ security:
     job-service:
       api-key: "${JOB_API_KEY}"
       enabled: true
+    auth-service:
+      api-key: "${AUTH_API_KEY}"
+      enabled: true
   paths:
     permittedRequestsForAllUsers:
       - method: GET
