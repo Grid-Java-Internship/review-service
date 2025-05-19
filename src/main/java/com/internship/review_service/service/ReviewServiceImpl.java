@@ -226,12 +226,12 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public List<ReviewResponse> getUserLeftReviews(Long id, int page) {
+    public List<ReviewResponse> getUserLeftReviews(Long id, int page,Status status) {
         Pageable pageable = PageRequest.of(page, 10);
 
         List<Review> reviews = reviewRepository.findByUserIdAndStatus(
                 id,
-                Status.ACCEPTED,
+                status,
                 pageable
         ).getContent();
 

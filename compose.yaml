@@ -6,7 +6,7 @@ services:
     ports:
       - "8084:8084"
     env_file:
-      - .env
+      - gradle.properties
     container_name: "review-service"
     networks:
       - global-network

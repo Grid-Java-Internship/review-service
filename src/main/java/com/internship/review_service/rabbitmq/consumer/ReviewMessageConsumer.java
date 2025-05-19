@@ -64,6 +64,7 @@ public class ReviewMessageConsumer {
 
         // Check if review is empty or already DISABLED
         if (review.isEmpty() || review.get().getStatus().equals(Status.DISABLED)) {
+            log.error("Review with id: {} not found or already disabled", message.getId());
             throw new NotFoundException("Review with id: " + message.getId() + " not found or already disabled");
         }
 

@@ -5,6 +5,7 @@ import com.internship.review_service.dto.request.ReviewRequest;
 import com.internship.review_service.dto.response.EntityRatingResponse;
 import com.internship.review_service.dto.response.ReviewResponse;
 import com.internship.review_service.enums.ReviewType;
+import com.internship.review_service.enums.Status;
 
 import java.util.List;
 
@@ -22,5 +23,5 @@ public interface ReviewService {
 
     EntityRatingResponse getEntityRating(Long reviewedId, ReviewType reviewType);
 
-    List<ReviewResponse> getUserLeftReviews(Long id, int page);
+    List<ReviewResponse> getUserLeftReviews(Long id, int page, Status status);
 }

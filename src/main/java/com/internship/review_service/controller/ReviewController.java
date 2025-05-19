@@ -6,6 +6,7 @@ import com.internship.review_service.dto.response.EntityRatingResponse;
 import com.internship.review_service.dto.response.ReviewResponse;
 import com.internship.review_service.dto.response.SimpleMessageResponse;
 import com.internship.review_service.enums.ReviewType;
+import com.internship.review_service.enums.Status;
 import com.internship.review_service.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -102,9 +103,10 @@ public class ReviewController {
         return ResponseEntity.status(HttpStatus.OK).body(reviewService.getEntityRating(id, type));
     }
 
-    @GetMapping("/leftReviews/{id}")
+    @GetMapping("/leftReviews/{id}/{status}")
     public ResponseEntity<List<ReviewResponse>> getUserLeftReviews(@PathVariable("id") Long id,
-                                                                   @RequestParam(value = "page", defaultValue = "0") int page) {
-        return ResponseEntity.status(HttpStatus.OK).body(reviewService.getUserLeftReviews(id,page));
+                                                                   @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                   @PathVariable Status status) {
+        return ResponseEntity.status(HttpStatus.OK).body(reviewService.getUserLeftReviews(id, page,status));
     }
 }

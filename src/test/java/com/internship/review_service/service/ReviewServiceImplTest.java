@@ -479,7 +479,7 @@ class ReviewServiceImplTest {
         when(reviewMapper.toDto(review)).thenReturn(response);
 
         // Act
-        List<ReviewResponse> result = reviewService.getUserLeftReviews(userId, page);
+        List<ReviewResponse> result = reviewService.getUserLeftReviews(userId, page,Status.ACCEPTED);
 
         // Assert
         assertNotNull(result);
@@ -500,7 +500,7 @@ class ReviewServiceImplTest {
                 .thenReturn(new PageImpl<>(Collections.emptyList()));
 
         // Act
-        List<ReviewResponse> result = reviewService.getUserLeftReviews(userId, page);
+        List<ReviewResponse> result = reviewService.getUserLeftReviews(userId, page,Status.ACCEPTED);
 
         // Assert
         assertNotNull(result);
@@ -521,7 +521,7 @@ class ReviewServiceImplTest {
                 .thenReturn(new PageImpl<>(Collections.emptyList()));
 
         // Act
-        List<ReviewResponse> result = reviewService.getUserLeftReviews(userId, page);
+        List<ReviewResponse> result = reviewService.getUserLeftReviews(userId, page,Status.ACCEPTED);
 
         // Assert
         assertNotNull(result);
