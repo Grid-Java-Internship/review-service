@@ -26,6 +26,9 @@ spring:
       disableJob: ${RABBITMQ_QUEUE_DISABLE_JOB_REVIEWS:disableJobReviewsQueue}
       enableUser: ${RABBITMQ_QUEUE_ENABLE_USER_REVIEWS:enableUserReviewsQueue}
       disableUser: ${RABBITMQ_QUEUE_DISABLE_USER_REVIEWS:disableUserReviewsQueue}
+    listener:
+      simple:
+        default-requeue-rejected: false
 
 server:
   port: 8084
@@ -49,6 +52,7 @@ management:
       exposure:
         include=*:
 
+
 microservicesUrls:
   user-service: "http://user-service:8081"
   job-service: "http://job-service:8082"
@@ -65,6 +69,9 @@ security:
       enabled: true
     auth-service:
       api-key: "${AUTH_API_KEY}"
+      enabled: true
+    reservation-service:
+      api-key: "${RESERVATION_API_KEY}"
       enabled: true
   paths:
     permittedRequestsForAllUsers:
