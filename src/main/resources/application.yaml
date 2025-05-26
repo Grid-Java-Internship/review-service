@@ -22,10 +22,10 @@ spring:
     queues:
       producer:
         added-review: ${RABBITMQ_QUEUE_ADDED_REVIEW:addedReview}
-      enableJob: ${RABBITMQ_QUEUE_ENABLE_JOB_REVIEWS:enableJobReviewsQueue}
-      disableJob: ${RABBITMQ_QUEUE_DISABLE_JOB_REVIEWS:disableJobReviewsQueue}
-      enableUser: ${RABBITMQ_QUEUE_ENABLE_USER_REVIEWS:enableUserReviewsQueue}
-      disableUser: ${RABBITMQ_QUEUE_DISABLE_USER_REVIEWS:disableUserReviewsQueue}
+        enableJob: ${RABBITMQ_QUEUE_ENABLE_JOB_REVIEWS:enableJobReviewsQueue}
+        disableJob: ${RABBITMQ_QUEUE_DISABLE_JOB_REVIEWS:disableJobReviewsQueue}
+        enableUser: ${RABBITMQ_QUEUE_ENABLE_USER_REVIEWS:enableUserReviewsQueue}
+        disableUser: ${RABBITMQ_QUEUE_DISABLE_USER_REVIEWS:disableUserReviewsQueue}
     listener:
       simple:
         default-requeue-rejected: false
