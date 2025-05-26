@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(
         name = "job-service",
-        url = "${microservicesUrls.job-service}",
         configuration = JobServiceFeignConfiguration.class
 )
 public interface JobService {

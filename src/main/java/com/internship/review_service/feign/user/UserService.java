@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(
         name = "user-service",
-        url = "${microservicesUrls.user-service}",
         configuration = UserServiceFeignConfiguration.class
 )
 public interface UserService {

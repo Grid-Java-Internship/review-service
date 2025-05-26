@@ -52,12 +52,6 @@ management:
       exposure:
         include=*:
 
-
-microservicesUrls:
-  user-service: "http://user-service:8081"
-  job-service: "http://job-service:8082"
-  reservation-service: "http://reservation-service:8083"
-
 security:
   api-key: "${BASE_API_KEY}"
   feign:

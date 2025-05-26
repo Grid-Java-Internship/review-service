@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(url = "${microservicesUrls.reservation-service}", name = "reservation-service", configuration = ReservationServiceFeignConfiguration.class)
+@FeignClient(
+        name = "reservation-service",
+        configuration = ReservationServiceFeignConfiguration.class
+)
 public interface ReservationService {
 
     @GetMapping("v1/reservations/customer/{customerId}")
