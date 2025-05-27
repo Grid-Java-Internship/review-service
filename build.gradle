@@ -56,7 +56,7 @@ dependencies {
 	implementation group: 'jakarta.validation', name: 'jakarta.validation-api', version: '3.1.1'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
-	implementation 'com.internship:authentication_library:0.2.8-SNAPSHOT'
+	implementation 'com.internship:authentication_library:0.3.0-SNAPSHOT'
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.2.0'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
